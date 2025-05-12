@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Dosender</string>
+    <string name="app_tagline">Dosen-Reminder for Fakultas Ilmu Komputer UPN Veteran Jakarta</string>
+    <string name="version_info">Version 1.0.0</string>
+
+    <!-- Auth Strings -->
+    <string name="login_title">Login</string>
+    <string name="login_subtitle">Please sign in to continue</string>
+    <string name="register_account">Create Account</string>
+    <string name="full_name">Full Name</string>
+    <string name="nidn">NIDN</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="register">Register</string>
+    <string name="login">Login</string>
+    <string name="forgot_password">Forgot Password?</string>
+    <string name="already_have_account">Already have an account? Login</string>
+    <string name="dont_have_account">Don\'t have an account? Register</string>
+    <string name="registration_success">Registration successful!</string>
+    <string name="registration_failed">Registration failed: %1$s</string>
+    <string name="login_success">Login successful!</string>
+    <string name="login_failed">Login failed: %1$s</string>
+    <string name="field_required">This field is required</string>
+    <string name="invalid_email">Please enter a valid email address</string>
+    <string name="password_too_short">Password must be at least 6 characters long</string>
+    <string name="password_mismatch">Passwords do not match</string>
+    <string name="error_saving_user_data">Error saving user data: %1$s</string>
+
+    <!-- Bottom Navigation -->
+    <string name="title_home">Home</string>
+    <string name="title_calendar">Calendar</string>
+    <string name="title_notifications">Notifications</string>
+    <string name="title_profile">Profile</string>
+
+    <!-- Home Screen -->
+    <string name="greeting">Welcome back,</string>
+    <string name="good_morning">Good morning,</string>
+    <string name="good_afternoon">Good afternoon,</string>
+    <string name="good_evening">Good evening,</string>
+    <string name="distance_from_campus">Distance from Campus:</string>
+    <string name="notification_info">Notifications will appear %1$d minutes before classes</string>
+    <string name="today_schedule">Today\'s Schedule</string>
+    <string name="no_schedule_today">No classes scheduled for today</string>
+    <string name="app_logo">Application Logo</string>
+
+    <!-- Schedule Items -->
+    <string name="location_icon">Location Icon</string>
+    <string name="class_icon">Class Icon</string>
+    <string name="department_icon">Department Icon</string>
+
+    <!-- Notification Screen -->
+    <string name="notification_history">Notification History</string>
+    <string name="no_notifications">No notifications yet</string>
+
+    <!-- Notification Detail -->
+    <string name="notification_detail">Notification Detail</string>
+    <string name="schedule_time">Schedule Time:</string>
+    <string name="room">Room:</string>
+    <string name="class_name">Class:</string>
+    <string name="open_campus_map">Open Campus Map</string>
+    <string name="back_button">Back Button</string>
+
+    <!-- Profile Screen -->
+    <string name="nidn_format">NIDN: %1$s</string>
+    <string name="notification_settings">Notification Settings</string>
+    <string name="enable_notifications">Enable Notifications</string>
+    <string name="notification_sound">Notification Sound</string>
+    <string name="notification_vibration">Notification Vibration</string>
+    <string name="distance_thresholds">Distance Thresholds</string>
+    <string name="distance_threshold_info">Adjust how many minutes before class you want to receive notifications based on your distance from campus</string>
+    <string name="distance_0_10km">0–10 km</string>
+    <string name="distance_10_20km">10–20 km</string>
+    <string name="distance_20_30km">20–30 km</string>
+    <string name="distance_30_40km">30–40 km</string>
+    <string name="distance_40_50km">40–50 km</string>
+    <string name="minutes">minutes</string>
+    <string name="save_settings">Save Settings</string>
+    <string name="saving">Saving…</string>
+    <string name="settings_saved">Settings saved successfully</string>
+    <string name="logout">Logout</string>
+
+    <!-- Calendar Screen -->
+    <string name="schedule_calendar">Schedule Calendar</string>
+    <string name="all_days">All Days</string>
+    <string name="monday">Monday</string>
+    <string name="tuesday">Tuesday</string>
+    <string name="wednesday">Wednesday</string>
+    <string name="thursday">Thursday</string>
+    <string name="friday">Friday</string>
+    <string name="saturday">Saturday</string>
+    <string name="sunday">Sunday</string>
+    <string name="no_schedule_available">No schedule available for this period</string>
+    <string name="no_schedule_for_day">No schedule available for %1$s</string>
+
+    <!-- Other -->
+    <string name="feature_coming_soon">This feature is coming soon</string>
+    <string name="notification_will_appear">Notifications will appear %1$d minutes before class</string>
+</resources>

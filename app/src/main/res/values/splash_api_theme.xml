@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.DosenNotif.SplashScreen" parent="Theme.SplashScreen">
+        <!-- Set the splash screen background color -->
+        <item name="windowSplashScreenBackground">@color/colorPrimary</item>
+
+        <!-- Use our logo as the splash screen icon -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash</item>
+
+        <!-- Status bar appearance during splash screen -->
+        <item name="android:statusBarColor">@color/colorPrimary</item>
+        <item name="android:navigationBarColor">@color/colorPrimary</item>
+
+        <!-- Theme to use after the splash screen transition -->
+        <item name="postSplashScreenTheme">@style/Theme.DosenNotif</item>
+
+        <!-- Optional: animation duration -->
+        <item name="android:windowSplashScreenAnimationDuration">1000</item>
+    </style>
+</resources>
