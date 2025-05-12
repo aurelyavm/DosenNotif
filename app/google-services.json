@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "992334420497",
+    "project_id": "dosennotif-ccfb6",
+    "storage_bucket": "dosennotif-ccfb6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:992334420497:android:78cf35cbaac5fdd8bfafb0",
+        "android_client_info": {
+          "package_name": "com.example.dosennotif"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCg3f2Om2CBF3P4a1edZJiMXZ0-vXqDyXg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:992334420497:android:898bf9ec48ce1d4bbfafb0",
+        "android_client_info": {
+          "package_name": "com.example.dosennotif"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCg3f2Om2CBF3P4a1edZJiMXZ0-vXqDyXg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
