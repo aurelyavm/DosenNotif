@@ -107,7 +107,11 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         )
 
         val todayDayName = dayMapping[currentDayOfWeek]?.lowercase(Locale.getDefault())
-
+        // pengecekan null
+        if (schedules.isNullOrEmpty()) {
+            _todaySchedules.postValue(emptyList())
+            return
+        }
         val filteredSchedules = schedules.filter { schedule ->
             schedule.getFormattedDay().lowercase(Locale.getDefault()).contains(todayDayName ?: "")
         }.sortedBy { schedule ->

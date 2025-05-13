@@ -25,8 +25,8 @@ class ScheduleAdapter(
 
     override fun getItemCount(): Int = schedules.size
 
-    fun updateSchedules(newSchedules: List<Schedule>) {
-        schedules = newSchedules
+    fun updateSchedules(newSchedules: List<Schedule>?) {
+        schedules = newSchedules ?: emptyList()
         notifyDataSetChanged()
     }
 

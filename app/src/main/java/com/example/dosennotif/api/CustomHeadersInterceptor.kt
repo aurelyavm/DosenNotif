@@ -1,5 +1,6 @@
 package com.example.dosennotif.api
 
+import android.util.Log
 import okhttp3.Interceptor
 import okhttp3.Response
 
@@ -10,9 +11,14 @@ class CustomHeadersInterceptor(private val headers: Map<String, String>) : Inter
 
         // Add custom headers
         headers.forEach { (key, value) ->
+            Log.d("ApiClient", "Adding header: $key = $value")
             requestBuilder.header(key, value)
         }
 
-        return chain.proceed(requestBuilder.build())
+        // Log full request for debugging
+        val request = requestBuilder.build()
+        Log.d("ApiClient", "Request Headers: ${request.headers}")
+
+        return chain.proceed(request)
     }
 }

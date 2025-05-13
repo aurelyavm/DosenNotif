@@ -7,7 +7,7 @@ import java.util.Date
 import java.util.Locale
 
 data class ScheduleResponse(
-    val status: String,
-    val message: String,
-    val data: List<Schedule>
+    val status: String = "",
+    val message: String = "",
+    val data: List<Schedule>? = null
 )

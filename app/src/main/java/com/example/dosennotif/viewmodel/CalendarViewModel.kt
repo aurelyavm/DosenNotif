@@ -92,7 +92,11 @@ class CalendarViewModel : ViewModel() {
         }
     }
 
-    private fun groupSchedulesByDay(schedules: List<Schedule>) {
+    private fun groupSchedulesByDay(schedules: List<Schedule>?) {
+        if (schedules.isNullOrEmpty()) {
+            _schedulesByDay.postValue(emptyMap())
+            return
+        }
         val groupedSchedules = schedules.groupBy {
             it.getFormattedDay()
         }.mapValues { entry ->

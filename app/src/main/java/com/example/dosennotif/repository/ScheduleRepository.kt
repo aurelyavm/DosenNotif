@@ -31,20 +31,30 @@ class ScheduleRepository {
 
                 // Fetch schedules for each department
                 for (departmentId in facultyDepartmentIds) {
-                    val requestBody = mapOf(
-                        "id_periode" to period,
-                        "id_program_studi" to departmentId
-                    )
+                    try {
+                        val requestBody = mapOf(
+                            "id_periode" to period,
+                            "id_program_studi" to departmentId
+                        )
 
-                    val response = apiService.getLecturerSchedule(requestBody)
+                        val response = apiService.getLecturerSchedule(requestBody)
 
-                    // Filter schedules for this lecturer and add to result set
-                    response.data
+                        // Check if response data is null
+                        if (response.data == null) {
+                            continue
+                        }
+                        // Filter schedules for this lecturer and add to result set
+                        response.data
                         .filter { it.nidn_dosen == lecturerNidn }
                         .forEach { uniqueSchedules.add(it) }
+                    } catch (e: Exception) {
+                        // Log error but continue with other departments
+                        e.printStackTrace()
+                    }
                 }
 
                 // Convert to list and return
+                // If no schedules found, return empty list instead of null
                 Resource.Success(uniqueSchedules.toList())
             } catch (e: Exception) {
                 Resource.Error(e.message ?: "An error occurred fetching schedules")

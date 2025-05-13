@@ -49,8 +49,25 @@ class CalendarFragment : Fragment() {
         setupDayFilter()
         setupRecyclerView()
 
+        // Setup refresh button
+        binding.btnRefresh.setOnClickListener {
+            refreshData()
+        }
+
         // Observe data changes
         observeViewModel()
+    }
+
+    /**
+     * Refresh data jadwal
+     */
+    private fun refreshData() {
+        binding.progressBar.visibility = View.VISIBLE
+        binding.tvNoSchedule.visibility = View.GONE
+        binding.btnRefresh.visibility = View.GONE
+
+        // Reload user data yang akan me-trigger load jadwal
+        viewModel.loadUserData()
     }
 
     private fun setupPeriodSpinner() {
@@ -101,6 +118,41 @@ class CalendarFragment : Fragment() {
         }
     }
 
+    private fun filterSchedules() {
+        val schedulesByDay = viewModel.schedulesByDay.value ?: return
+
+        if (selectedDay == null) {
+            // Show all days
+            scheduleAdapter.updateSchedules(schedulesByDay)
+
+            if (schedulesByDay.isEmpty()) {
+                binding.tvNoSchedule.text = getString(R.string.no_schedule_available)
+                binding.tvNoSchedule.visibility = View.VISIBLE
+                binding.rvSchedules.visibility = View.GONE
+                binding.btnRefresh.visibility = View.VISIBLE
+            } else {
+                binding.tvNoSchedule.visibility = View.GONE
+                binding.rvSchedules.visibility = View.VISIBLE
+                binding.btnRefresh.visibility = View.GONE
+            }
+        } else {
+            // Filter by selected day
+            val filteredSchedules = schedulesByDay.filter { it.key == selectedDay }
+
+            if (filteredSchedules.isEmpty()) {
+                binding.tvNoSchedule.text = getString(R.string.no_schedule_for_day, selectedDay)
+                binding.tvNoSchedule.visibility = View.VISIBLE
+                binding.rvSchedules.visibility = View.GONE
+                binding.btnRefresh.visibility = View.VISIBLE
+            } else {
+                binding.tvNoSchedule.visibility = View.GONE
+                binding.rvSchedules.visibility = View.VISIBLE
+                binding.btnRefresh.visibility = View.GONE
+                scheduleAdapter.updateSchedules(filteredSchedules)
+            }
+        }
+    }
+
     private fun observeViewModel() {
         // Observe period changes
         viewModel.selectedPeriod.observe(viewLifecycleOwner) { period ->
@@ -136,32 +188,11 @@ class CalendarFragment : Fragment() {
                     }
                     is Resource.Error -> {
                         binding.progressBar.visibility = View.GONE
-                        binding.tvNoSchedule.text = state.message
+                        binding.tvNoSchedule.text = getString(R.string.api_error)
                         binding.tvNoSchedule.visibility = View.VISIBLE
+                        binding.rvSchedules.visibility = View.GONE
                     }
                 }
-            }
-        }
-    }
-
-    private fun filterSchedules() {
-        val schedulesByDay = viewModel.schedulesByDay.value ?: return
-
-        if (selectedDay == null) {
-            // Show all days
-            scheduleAdapter.updateSchedules(schedulesByDay)
-        } else {
-            // Filter by selected day
-            val filteredSchedules = schedulesByDay.filter { it.key == selectedDay }
-
-            if (filteredSchedules.isEmpty()) {
-                binding.tvNoSchedule.text = getString(R.string.no_schedule_for_day, selectedDay)
-                binding.tvNoSchedule.visibility = View.VISIBLE
-                binding.rvSchedules.visibility = View.GONE
-            } else {
-                binding.tvNoSchedule.visibility = View.GONE
-                binding.rvSchedules.visibility = View.VISIBLE
-                scheduleAdapter.updateSchedules(filteredSchedules)
             }
         }
     }

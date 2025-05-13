@@ -7,7 +7,7 @@ import com.example.dosennotif.databinding.ItemScheduleItemBinding
 import com.example.dosennotif.model.Schedule
 
 class ScheduleItemAdapter(
-    private val schedules: List<Schedule>
+    private val schedules: List<Schedule> = emptyList()
 ) : RecyclerView.Adapter<ScheduleItemAdapter.ScheduleItemViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ScheduleItemViewHolder {

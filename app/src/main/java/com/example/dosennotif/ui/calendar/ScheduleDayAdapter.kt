@@ -8,7 +8,7 @@ import com.example.dosennotif.databinding.ItemScheduleDayBinding
 import com.example.dosennotif.model.Schedule
 
 class ScheduleDayAdapter(
-    private var schedulesByDay: Map<String, List<Schedule>>
+    private var schedulesByDay: Map<String, List<Schedule>> = emptyMap()
 ) : RecyclerView.Adapter<ScheduleDayAdapter.DayViewHolder>() {
 
     // Get sorted days from the map
@@ -32,8 +32,8 @@ class ScheduleDayAdapter(
 
     override fun getItemCount(): Int = schedulesByDay.size
 
-    fun updateSchedules(newSchedulesByDay: Map<String, List<Schedule>>) {
-        schedulesByDay = newSchedulesByDay
+    fun updateSchedules(newSchedulesByDay: Map<String, List<Schedule>>?) {
+        schedulesByDay = newSchedulesByDay ?: emptyMap()
         notifyDataSetChanged()
     }
 

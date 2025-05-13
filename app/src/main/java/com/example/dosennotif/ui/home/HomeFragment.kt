@@ -52,11 +52,28 @@ class HomeFragment : Fragment() {
         // Set greeting based on time of day
         setGreeting()
 
+        // Setup refresh button
+        binding.btnRefresh.setOnClickListener {
+            refreshData()
+        }
+
         // Observe data changes
         observeViewModel()
 
         // Start location updates
         requestLocationUpdates()
+    }
+
+    /**
+     * Refresh data jadwal
+     */
+    private fun refreshData() {
+        binding.progressBar.visibility = View.VISIBLE
+        binding.tvNoSchedule.visibility = View.GONE
+        binding.btnRefresh.visibility = View.GONE
+
+        // Reload user data yang akan me-trigger load jadwal
+        viewModel.loadUserData()
     }
 
     private fun setupRecyclerView() {
@@ -118,21 +135,24 @@ class HomeFragment : Fragment() {
                     }
                     is Resource.Error -> {
                         binding.progressBar.visibility = View.GONE
-                        binding.tvNoSchedule.text = state.message
+                        binding.tvNoSchedule.text = getString(R.string.api_error)
                         binding.tvNoSchedule.visibility = View.VISIBLE
+                        binding.rvTodaySchedule.visibility = View.GONE
                     }
                 }
             }
         }
     }
 
-    private fun updateScheduleList(schedules: List<Schedule>) {
-        if (schedules.isEmpty()) {
+    private fun updateScheduleList(schedules: List<Schedule>?) {
+        if (schedules.isNullOrEmpty()) {
             binding.tvNoSchedule.visibility = View.VISIBLE
             binding.rvTodaySchedule.visibility = View.GONE
+            binding.btnRefresh.visibility = View.VISIBLE
         } else {
             binding.tvNoSchedule.visibility = View.GONE
             binding.rvTodaySchedule.visibility = View.VISIBLE
+            binding.btnRefresh.visibility = View.GONE
             scheduleAdapter.updateSchedules(schedules)
         }
     }
