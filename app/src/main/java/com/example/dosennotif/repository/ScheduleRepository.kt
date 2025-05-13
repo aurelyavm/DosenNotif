@@ -1,5 +1,6 @@
 package com.example.dosennotif.repository
 
+import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
 import com.example.dosennotif.api.ApiClient
 import com.example.dosennotif.model.Schedule
@@ -9,80 +10,89 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import java.util.LinkedHashSet
+import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.MultipartBody
 
 class ScheduleRepository {
     private val apiService = ApiClient.create()
     private val firestore = FirebaseFirestore.getInstance()
 
-    // Department IDs for Faculty of Computer Science
-    private val facultyDepartmentIds = listOf(
-        "3",  // S1 Informatika
-        "4",  // S1 Sistem Informasi
-        "6",  // DIII Sistem Informasi
-        "58"  // S1 Sains Data
-    )
+    private val TAG = "ScheduleRepository"
 
-    // Fetch lecturer schedule from API
+    private val facultyDepartmentIds = listOf("3", "4", "6", "58")
+
     suspend fun getLecturerSchedule(lecturerNidn: String, period: String = "20242"): Resource<List<Schedule>> {
         return withContext(Dispatchers.IO) {
             try {
-                // Create result set to handle duplicate schedules
                 val uniqueSchedules = LinkedHashSet<Schedule>()
+                Log.d(TAG, "Fetching schedule for lecturer $lecturerNidn in period $period")
 
-                // Fetch schedules for each department
                 for (departmentId in facultyDepartmentIds) {
                     try {
-                        val requestBody = mapOf(
-                            "id_periode" to period,
-                            "id_program_studi" to departmentId
-                        )
+                        val idProdiBody = departmentId.toRequestBody(MultipartBody.FORM)
+                        val idPeriodeBody = period.toRequestBody(MultipartBody.FORM)
 
-                        val response = apiService.getLecturerSchedule(requestBody)
+                        Log.d(TAG, "Requesting schedule for departmentId=$departmentId")
 
-                        // Check if response data is null
+                        val response = apiService.getLecturerSchedule(idProdiBody, idPeriodeBody)
+
                         if (response.data == null) {
+                            Log.w(TAG, "No data received for departmentId=$departmentId")
                             continue
                         }
-                        // Filter schedules for this lecturer and add to result set
-                        response.data
-                        .filter { it.nidn_dosen == lecturerNidn }
-                        .forEach { uniqueSchedules.add(it) }
+
+                        val filtered = response.data.filter { it.nidn_dosen == lecturerNidn }
+                        Log.d(
+                            TAG,
+                            "Found ${filtered.size} schedules for lecturer in departmentId=$departmentId"
+                        )
+
+                        filtered.forEach { uniqueSchedules.add(it) }
+
                     } catch (e: Exception) {
-                        // Log error but continue with other departments
-                        e.printStackTrace()
+                        Log.e(
+                            TAG,
+                            "Error fetching schedule for departmentId=$departmentId: ${e.message}",
+                            e
+                        )
                     }
                 }
 
-                // Convert to list and return
-                // If no schedules found, return empty list instead of null
+                Log.d(TAG, "Total unique schedules found: ${uniqueSchedules.size}")
                 Resource.Success(uniqueSchedules.toList())
             } catch (e: Exception) {
+                Log.e(TAG, "Unexpected error fetching schedules: ${e.message}", e)
                 Resource.Error(e.message ?: "An error occurred fetching schedules")
             }
         }
     }
 
-    // Save schedule notification to Firestore
     suspend fun saveNotification(userId: String, notification: ScheduleNotification): Resource<String> {
         return withContext(Dispatchers.IO) {
             try {
+                Log.d(TAG, "Saving notification for userId=$userId: $notification")
+
                 val notificationRef = firestore.collection("users")
                     .document(userId)
                     .collection("notifications")
                     .document(notification.id)
 
                 notificationRef.set(notification).await()
+
+                Log.d(TAG, "Notification saved with ID: ${notification.id}")
                 Resource.Success(notification.id)
             } catch (e: Exception) {
+                Log.e(TAG, "Failed to save notification: ${e.message}", e)
                 Resource.Error(e.message ?: "Failed to save notification")
             }
         }
     }
 
-    // Get all notifications for a user
     suspend fun getUserNotifications(userId: String): Resource<List<ScheduleNotification>> {
         return withContext(Dispatchers.IO) {
             try {
+                Log.d(TAG, "Fetching notifications for userId=$userId")
+
                 val notifications = firestore.collection("users")
                     .document(userId)
                     .collection("notifications")
@@ -91,17 +101,20 @@ class ScheduleRepository {
                     .await()
                     .toObjects(ScheduleNotification::class.java)
 
+                Log.d(TAG, "Fetched ${notifications.size} notifications")
                 Resource.Success(notifications)
             } catch (e: Exception) {
+                Log.e(TAG, "Failed to get notifications: ${e.message}", e)
                 Resource.Error(e.message ?: "Failed to get notifications")
             }
         }
     }
 
-    // Mark notification as read
     suspend fun markNotificationAsRead(userId: String, notificationId: String): Resource<Unit> {
         return withContext(Dispatchers.IO) {
             try {
+                Log.d(TAG, "Marking notification as read: userId=$userId, notificationId=$notificationId")
+
                 firestore.collection("users")
                     .document(userId)
                     .collection("notifications")
@@ -109,8 +122,10 @@ class ScheduleRepository {
                     .update("isRead", true)
                     .await()
 
+                Log.d(TAG, "Notification marked as read")
                 Resource.Success(Unit)
             } catch (e: Exception) {
+                Log.e(TAG, "Failed to mark notification as read: ${e.message}", e)
                 Resource.Error(e.message ?: "Failed to mark notification as read")
             }
         }

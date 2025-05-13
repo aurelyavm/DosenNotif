@@ -15,6 +15,6 @@
         <item name="postSplashScreenTheme">@style/Theme.DosenNotif</item>
 
         <!-- Optional: animation duration -->
-        <item name="android:windowSplashScreenAnimationDuration">1000</item>
+<!--        <item name="android:windowSplashScreenAnimationDuration">1000</item>-->
     </style>
 </resources>
