@@ -50,6 +50,7 @@ class MainActivity : AppCompatActivity() {
 
         // Request permissions
         requestRequiredPermissions()
+        checkNotificationPermission()
     }
 
     private fun requestRequiredPermissions() {
@@ -100,6 +101,21 @@ class MainActivity : AppCompatActivity() {
             }
             NOTIFICATION_PERMISSION_REQUEST_CODE -> {
                 // Handle notification permission result if needed
+            }
+        }
+    }
+    private fun checkNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    NOTIFICATION_PERMISSION_REQUEST_CODE
+                )
             }
         }
     }

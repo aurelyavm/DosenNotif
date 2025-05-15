@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Dosender</string>
-    <string name="app_tagline">Dosen-Reminder for Fakultas Ilmu Komputer UPN Veteran Jakarta</string>
+    <string name="app_name">DosenDer</string>
+    <string name="app_tagline">Dosen reminDer\nFakultas Ilmu Komputer UPN Veteran Jakarta</string>
     <string name="version_info">Version 1.0.0</string>
 
     <!-- Auth Strings -->
