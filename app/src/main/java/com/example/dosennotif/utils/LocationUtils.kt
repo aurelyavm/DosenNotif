@@ -18,9 +18,37 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 
 object LocationUtils {
-    // UPNVJ Campus Location (can be adjusted to more accurate coordinates)
-    private const val UPNVJ_LATITUDE = -6.315588522917615
-    private const val UPNVJ_LONGITUDE = 106.83980697680275
+    // UPNVJ Campus Location
+
+    private const val UPNVJ_LATITUDE = -6.315588522917615 //-6.3159007105195535, 106.79496049535477
+    private const val UPNVJ_LONGITUDE = 106.83980697680275 //-6.315868725694896, 106.79500341534542
+
+    //jarak 10+ km:
+    /*
+    private const val UPNVJ_LATITUDE = -8.70650172328101
+    private const val UPNVJ_LONGITUDE = 115.17777198369669
+    */
+    //jarak 20+ km:
+    /*
+    private const val UPNVJ_LATITUDE = -8.606946753381965
+    private const val UPNVJ_LONGITUDE = 115.1950018243033
+     */
+    //jarak 30+ km:
+    /*
+    private const val UPNVJ_LATITUDE = -8.528143391134693
+    private const val UPNVJ_LONGITUDE = 115.20082408555326
+     */
+    //jarak 40+ km:
+    /*
+    private const val UPNVJ_LATITUDE = -8.448345800051587
+    private const val UPNVJ_LONGITUDE = 115.1672666046926
+     */
+    //jarak 50+ km:
+    //private const val UPNVJ_LATITUDE = -8.331872716883032
+    //private const val UPNVJ_LONGITUDE = 115.1842662169762
+    //jarak 30+ km (versi udah di rumah):
+    //private const val UPNVJ_LATITUDE = -6.221082361732866
+    //private const val UPNVJ_LONGITUDE = 106.56228184232832
 
     // Calculate distance between two locations in kilometers
     fun calculateDistance(

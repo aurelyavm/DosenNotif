@@ -4,12 +4,10 @@ import android.app.AlarmManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.media.RingtoneManager
 import android.os.Build
-import android.os.SystemClock
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
@@ -33,7 +31,6 @@ object NotificationUtils {
 
     private val repository = ScheduleRepository()
 
-    // Create notification channel
     fun createNotificationChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val importance = NotificationManager.IMPORTANCE_HIGH
@@ -51,66 +48,34 @@ object NotificationUtils {
     // Schedule a notification for a specific time
     fun scheduleNotification(context: Context, schedule: Schedule, delayMinutes: Int) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-
-        // Get current user
         val currentUser = FirebaseAuth.getInstance().currentUser ?: return
 
-        // Calculate notification time
         val startTimeCalendar = Calendar.getInstance().apply {
-            // Parse schedule start time
             val hour = schedule.jam_mulai.split(":")[0].toInt()
             val minute = schedule.jam_mulai.split(":")[1].toInt()
-
-            // Set calendar time to class start
             set(Calendar.HOUR_OF_DAY, hour)
             set(Calendar.MINUTE, minute)
             set(Calendar.SECOND, 0)
 
-            // Adjust to correct day of week
             val dayOfWeekFromSchedule = schedule.getDayOfWeekNumber()
             val currentDayOfWeek = get(Calendar.DAY_OF_WEEK)
-
-            // Calculate days to add
             val daysToAdd = if (dayOfWeekFromSchedule >= currentDayOfWeek) {
                 dayOfWeekFromSchedule - currentDayOfWeek
             } else {
                 7 - (currentDayOfWeek - dayOfWeekFromSchedule)
             }
-
             add(Calendar.DAY_OF_YEAR, daysToAdd)
         }
 
-        // Subtract delay minutes for notification time
         val notificationTime = startTimeCalendar.clone() as Calendar
         notificationTime.add(Calendar.MINUTE, -delayMinutes)
 
-        // Skip if notification time is in the past
         if (notificationTime.timeInMillis <= System.currentTimeMillis()) {
             Log.d("NotificationUtils", "Skipping notification for past schedule: ${schedule.nama_mata_kuliah}")
             return
         }
 
-        // Create notification ID
         val notificationId = UUID.randomUUID().toString()
-
-        // Create notification data
-        val notificationData = ScheduleNotification(
-            id = notificationId,
-            scheduleId = schedule.id_dosen + "_" + schedule.kode_mata_kuliah + "_" + schedule.kelas,
-            title = "Upcoming Class: ${schedule.nama_mata_kuliah}",
-            message = "You have ${schedule.nama_mata_kuliah} class in ${delayMinutes} minutes at room ${schedule.ruang}",
-            scheduledTime = notificationTime.timeInMillis,
-            actualScheduleTime = startTimeCalendar.timeInMillis,
-            room = schedule.ruang,
-            courseName = schedule.nama_mata_kuliah,
-            className = schedule.kelas,
-            isRead = false
-        )
-
-        // Store notification data in Firestore
-        CoroutineScope(Dispatchers.IO).launch {
-            repository.saveNotification(currentUser.uid, notificationData)
-        }
 
         // Create intent for notification tap action
         val intent = Intent(context, NotificationDetailActivity::class.java).apply {
@@ -126,12 +91,20 @@ object NotificationUtils {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // Create intent for alarm receiver
+        // Create intent for alarm receiver - PASS SCHEDULE DATA
         val alarmIntent = Intent(context, AlarmReceiver::class.java).apply {
             putExtra("notification_id", notificationId)
-            putExtra("title", notificationData.title)
-            putExtra("message", notificationData.message)
+            putExtra("title", "Upcoming Class: ${schedule.nama_mata_kuliah}")
+            putExtra("message", "You have ${schedule.nama_mata_kuliah} class in ${delayMinutes} minutes at room ${schedule.ruang}")
             putExtra("user_id", currentUser.uid)
+
+            // Pass schedule data for saving to history later
+            putExtra("schedule_id", schedule.id_dosen + "_" + schedule.kode_mata_kuliah + "_" + schedule.kelas)
+            putExtra("scheduled_time", notificationTime.timeInMillis)
+            putExtra("actual_schedule_time", startTimeCalendar.timeInMillis)
+            putExtra("room", schedule.ruang)
+            putExtra("course_name", schedule.nama_mata_kuliah)
+            putExtra("class_name", schedule.kelas)
         }
 
         // Create pending intent for alarm
@@ -158,6 +131,9 @@ object NotificationUtils {
         }
 
         Log.d("NotificationUtils", "Scheduled notification for ${schedule.nama_mata_kuliah} at ${notificationTime.time}")
+
+        // REMOVED: No longer save notification to database here
+        // Only schedule the alarm, save to database when notification actually shows
     }
 
     // Show a notification immediately
@@ -166,7 +142,13 @@ object NotificationUtils {
         notificationId: String,
         title: String,
         message: String,
-        userId: String? = null
+        userId: String? = null,
+        scheduleId: String? = null,
+        scheduledTime: Long? = null,
+        actualScheduleTime: Long? = null,
+        room: String? = null,
+        courseName: String? = null,
+        className: String? = null
     ) {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -229,7 +211,33 @@ object NotificationUtils {
         // Show notification
         notificationManager.notify(notificationId.hashCode(), notificationBuilder.build())
 
-        // Mark notification as shown if userId is provided
+        // SAVE TO DATABASE - Only when notification is actually shown
+        userId?.let { uid ->
+            val notificationData = ScheduleNotification(
+                id = notificationId,
+                scheduleId = scheduleId ?: "",
+                title = title,
+                message = message,
+                scheduledTime = scheduledTime ?: System.currentTimeMillis(),
+                actualScheduleTime = actualScheduleTime ?: System.currentTimeMillis(),
+                room = room ?: "",
+                courseName = courseName ?: extractCourseNameFromTitle(title),
+                className = className ?: "",
+                isRead = false,
+                createdAt = System.currentTimeMillis()  // When notification actually appeared
+            )
+
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    repository.saveNotification(uid, notificationData)
+                    Log.d("NotificationUtils", "Notification saved to history: $notificationId")
+                } catch (e: Exception) {
+                    Log.e("NotificationUtils", "Failed to save notification to history: ${e.message}")
+                }
+            }
+        }
+
+        // Mark notification as shown in Firestore (if needed for other purposes)
         userId?.let {
             FirebaseFirestore.getInstance()
                 .collection("users")
@@ -237,6 +245,18 @@ object NotificationUtils {
                 .collection("notifications")
                 .document(notificationId)
                 .update("isShown", true)
+                .addOnFailureListener { e ->
+                    Log.w("NotificationUtils", "Failed to update isShown flag: ${e.message}")
+                }
+        }
+    }
+
+    // Helper function to extract course name from title
+    private fun extractCourseNameFromTitle(title: String): String {
+        return if (title.startsWith("Upcoming Class: ")) {
+            title.substring("Upcoming Class: ".length)
+        } else {
+            title
         }
     }
 }

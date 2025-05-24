@@ -81,9 +81,24 @@ class NotificationDetailActivity : AppCompatActivity() {
     }
 
     private fun openCampusMap() {
-        // Open Google Maps with UPN Veteran Jakarta location
+        // Open Google Maps with UPN Veteran Jakarta location :
         val gmmIntentUri = Uri.parse("geo:-6.315588522917615,106.83980697680275?q=UPN+Veteran+Jakarta")
+        // jarak 10+ km:
+        //val gmmIntentUri = Uri.parse("geo:-8.706162356585414,115.17742866094957?q=UPN+Veteran+Jakarta")
+        // jarak 20+ km -- done ss notif
+        //val gmmIntentUri = Uri.parse("geo:-8.606946753381965, 115.1950018243033?q=UPN+Veteran+Jakarta")
+        //jarak 30+ km -- done ss notif
+        //val gmmIntentUri = Uri.parse("geo:-8.527464337179357,115.19189769412824?q=UPN+Veteran+Jakarta")
+        //jarak 40+ km
+        //val gmmIntentUri = Uri.parse("geo:-8.448345800051587, 115.1672666046926?q=UPN+Veteran+Jakarta")
+        //jarak 50+ km
+        //val gmmIntentUri = Uri.parse("geo:-8.325071867130365, 115.18532365335058?q=UPN+Veteran+Jakarta")
+        //jarak 30+ km (versi udah di rumah)
+        //val gmmIntentUri = Uri.parse("geo:-6.221157021315558,106.5623033?q=UPN+Veteran+Jakarta")
+
         val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)
+
+
         mapIntent.setPackage("com.google.android.apps.maps")
 
         if (mapIntent.resolveActivity(packageManager) != null) {

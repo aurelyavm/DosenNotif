@@ -28,6 +28,9 @@
     <string name="password_mismatch">Passwords do not match</string>
     <string name="error_saving_user_data">Error saving user data: %1$s</string>
     <string name="api_error">An error occurred while fetching data. Please try again later.</string>
+    <string name="error_invalid_credentials">Invalid username or password. Please try again.</string>
+    <string name="error_user_not_found">User not found. Please register first.</string>
+    <string name="error_generic">An error occurred. Please try again later.</string>
 
     <!-- Bottom Navigation -->
     <string name="title_home">Home</string>

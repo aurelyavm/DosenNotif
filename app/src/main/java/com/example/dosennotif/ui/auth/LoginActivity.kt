@@ -86,9 +86,20 @@ class LoginActivity : AppCompatActivity() {
                     startActivity(Intent(this, MainActivity::class.java))
                     finish()
                 } else {
+                    val errorMessage = when (task.exception?.message) {
+                        "The supplied auth credential is incorrect, malformed or has expired." -> getString(R.string.error_invalid_credentials)
+                        "There is no user record corresponding to this identifier. The user may have been deleted." -> getString(R.string.error_user_not_found)
+                        else -> getString(R.string.error_generic)
+                    }
+                    /*
                     Toast.makeText(
                         this,
                         getString(R.string.login_failed, task.exception?.message),
+                        Toast.LENGTH_SHORT
+                     */
+                    Toast.makeText(
+                        this,
+                        getString(R.string.login_failed, errorMessage),
                         Toast.LENGTH_SHORT
                     ).show()
                 }

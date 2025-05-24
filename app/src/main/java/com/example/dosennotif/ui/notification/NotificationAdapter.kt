@@ -1,6 +1,5 @@
 package com.example.dosennotif.ui.notification
 
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,7 +12,6 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
-import java.util.TimeZone
 
 class NotificationAdapter(
     private var notifications: List<ScheduleNotification>,
@@ -72,54 +70,64 @@ class NotificationAdapter(
                 timeInMillis = timestamp
             }
 
-            // Debug log
-            Log.d("timet", "Now: ${now.time}, Notification: ${notificationTime.time}, Timestamp: $timestamp")
-
-            // Tentukan timezone (misal: Jakarta, atau pakai default)
-            val timeZone = TimeZone.getDefault() // atau: TimeZone.getTimeZone("Asia/Jakarta")
+            val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+            val timeString = timeFormat.format(Date(timestamp))
 
             return when {
-                // Today
-                now.get(Calendar.DATE) == notificationTime.get(Calendar.DATE) &&
-                        now.get(Calendar.MONTH) == notificationTime.get(Calendar.MONTH) &&
-                        now.get(Calendar.YEAR) == notificationTime.get(Calendar.YEAR) -> {
-                    val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault()).apply {
-                        this.timeZone = timeZone
-                    }
-                    "Today, ${timeFormat.format(Date(timestamp))}"
+                // Today - same date
+                isSameDay(now, notificationTime) -> {
+                    "Today, $timeString"
                 }
 
                 // Yesterday
-                now.get(Calendar.DATE) - notificationTime.get(Calendar.DATE) == 1 &&
-                        now.get(Calendar.MONTH) == notificationTime.get(Calendar.MONTH) &&
-                        now.get(Calendar.YEAR) == notificationTime.get(Calendar.YEAR) -> {
-                    val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault()).apply {
-                        this.timeZone = timeZone
-                    }
-                    "Yesterday, ${timeFormat.format(Date(timestamp))}"
+                isYesterday(now, notificationTime) -> {
+                    "Yesterday, $timeString"
                 }
 
-                // This week
-                now.get(Calendar.WEEK_OF_YEAR) == notificationTime.get(Calendar.WEEK_OF_YEAR) &&
-                        now.get(Calendar.YEAR) == notificationTime.get(Calendar.YEAR) -> {
-                    val dayFormat = SimpleDateFormat("EEEE", Locale.getDefault()).apply {
-                        this.timeZone = timeZone
-                    }
-                    val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault()).apply {
-                        this.timeZone = timeZone
-                    }
-                    "${dayFormat.format(Date(timestamp))}, ${timeFormat.format(Date(timestamp))}"
+                // This week (within 7 days)
+                isThisWeek(now, notificationTime) -> {
+                    val dayFormat = SimpleDateFormat("EEEE", Locale.getDefault())
+                    val dayName = dayFormat.format(Date(timestamp))
+                    "$dayName, $timeString"
                 }
 
-                // Other dates
+                // This year
+                isSameYear(now, notificationTime) -> {
+                    val dateFormat = SimpleDateFormat("MMM dd", Locale.getDefault())
+                    val dateString = dateFormat.format(Date(timestamp))
+                    "$dateString, $timeString"
+                }
+
+                // Different year
                 else -> {
-                    val dateFormat = SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault()).apply {
-                        this.timeZone = timeZone
-                    }
-                    dateFormat.format(Date(timestamp))
+                    val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+                    val dateString = dateFormat.format(Date(timestamp))
+                    "$dateString, $timeString"
                 }
             }
         }
 
+        private fun isSameDay(cal1: Calendar, cal2: Calendar): Boolean {
+            return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
+                    cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR)
+        }
+
+        private fun isYesterday(currentTime: Calendar, notificationTime: Calendar): Boolean {
+            val yesterday = Calendar.getInstance().apply {
+                timeInMillis = currentTime.timeInMillis
+                add(Calendar.DAY_OF_YEAR, -1)
+            }
+
+            return isSameDay(yesterday, notificationTime)
+        }
+
+        private fun isThisWeek(currentTime: Calendar, notificationTime: Calendar): Boolean {
+            val diffInDays = (currentTime.timeInMillis - notificationTime.timeInMillis) / (1000 * 60 * 60 * 24)
+            return diffInDays in 2..6 // 2-6 days ago (yesterday already handled)
+        }
+
+        private fun isSameYear(cal1: Calendar, cal2: Calendar): Boolean {
+            return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR)
+        }
     }
 }
