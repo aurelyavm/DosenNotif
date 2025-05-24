@@ -100,7 +100,7 @@ class ScheduleRepository {
                     .get()
                     .await()
                     .toObjects(ScheduleNotification::class.java)
-
+                Log.d(TAG,"data : ${notifications}")
                 Log.d(TAG, "Fetched ${notifications.size} notifications")
                 Resource.Success(notifications)
             } catch (e: Exception) {

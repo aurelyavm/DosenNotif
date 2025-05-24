@@ -1,5 +1,6 @@
 package com.example.dosennotif.ui.notification
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,6 +13,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 
 class NotificationAdapter(
     private var notifications: List<ScheduleNotification>,
@@ -70,12 +72,20 @@ class NotificationAdapter(
                 timeInMillis = timestamp
             }
 
+            // Debug log
+            Log.d("timet", "Now: ${now.time}, Notification: ${notificationTime.time}, Timestamp: $timestamp")
+
+            // Tentukan timezone (misal: Jakarta, atau pakai default)
+            val timeZone = TimeZone.getDefault() // atau: TimeZone.getTimeZone("Asia/Jakarta")
+
             return when {
                 // Today
                 now.get(Calendar.DATE) == notificationTime.get(Calendar.DATE) &&
                         now.get(Calendar.MONTH) == notificationTime.get(Calendar.MONTH) &&
                         now.get(Calendar.YEAR) == notificationTime.get(Calendar.YEAR) -> {
-                    val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+                    val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault()).apply {
+                        this.timeZone = timeZone
+                    }
                     "Today, ${timeFormat.format(Date(timestamp))}"
                 }
 
@@ -83,24 +93,33 @@ class NotificationAdapter(
                 now.get(Calendar.DATE) - notificationTime.get(Calendar.DATE) == 1 &&
                         now.get(Calendar.MONTH) == notificationTime.get(Calendar.MONTH) &&
                         now.get(Calendar.YEAR) == notificationTime.get(Calendar.YEAR) -> {
-                    val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+                    val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault()).apply {
+                        this.timeZone = timeZone
+                    }
                     "Yesterday, ${timeFormat.format(Date(timestamp))}"
                 }
 
                 // This week
                 now.get(Calendar.WEEK_OF_YEAR) == notificationTime.get(Calendar.WEEK_OF_YEAR) &&
                         now.get(Calendar.YEAR) == notificationTime.get(Calendar.YEAR) -> {
-                    val dayFormat = SimpleDateFormat("EEEE", Locale.getDefault())
-                    val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+                    val dayFormat = SimpleDateFormat("EEEE", Locale.getDefault()).apply {
+                        this.timeZone = timeZone
+                    }
+                    val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault()).apply {
+                        this.timeZone = timeZone
+                    }
                     "${dayFormat.format(Date(timestamp))}, ${timeFormat.format(Date(timestamp))}"
                 }
 
-                // Other
+                // Other dates
                 else -> {
-                    val dateFormat = SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault())
+                    val dateFormat = SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault()).apply {
+                        this.timeZone = timeZone
+                    }
                     dateFormat.format(Date(timestamp))
                 }
             }
         }
+
     }
 }
