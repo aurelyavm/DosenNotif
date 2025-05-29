@@ -21,7 +21,9 @@ import com.example.dosennotif.ui.notification.NotificationDetailActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Locale
 import java.util.UUID
 
 object NotificationUtils {
@@ -30,6 +32,9 @@ object NotificationUtils {
     private const val CHANNEL_DESCRIPTION = "Notifications for upcoming teaching schedules"
 
     private val repository = ScheduleRepository()
+
+    // ✅ Set jadwal yang sudah dijadwalkan (agar tidak double)
+    private val scheduledNotifications = mutableSetOf<String>()
 
     fun createNotificationChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -45,10 +50,24 @@ object NotificationUtils {
         }
     }
 
+    // ✅ Membuat key unik dari jadwal
+    private fun getUniqueScheduleKey(schedule: Schedule): String {
+        return "${schedule.id_dosen}_${schedule.kode_mata_kuliah}_${schedule.kelas}_${schedule.hari}"
+    }
+
     // Schedule a notification for a specific time
     fun scheduleNotification(context: Context, schedule: Schedule, delayMinutes: Int) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val currentUser = FirebaseAuth.getInstance().currentUser ?: return
+
+        val scheduleKey = getUniqueScheduleKey(schedule)
+
+        // ✅ Skip jika sudah dijadwalkan
+        if (scheduledNotifications.contains(scheduleKey)) {
+            Log.d("NotificationUtils", "🔁 Skipped: already scheduled for $scheduleKey")
+            return
+        }
+        scheduledNotifications.add(scheduleKey)
 
         val startTimeCalendar = Calendar.getInstance().apply {
             val hour = schedule.jam_mulai.split(":")[0].toInt()
@@ -56,6 +75,7 @@ object NotificationUtils {
             set(Calendar.HOUR_OF_DAY, hour)
             set(Calendar.MINUTE, minute)
             set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
 
             val dayOfWeekFromSchedule = schedule.getDayOfWeekNumber()
             val currentDayOfWeek = get(Calendar.DAY_OF_WEEK)
@@ -70,20 +90,42 @@ object NotificationUtils {
         val notificationTime = startTimeCalendar.clone() as Calendar
         notificationTime.add(Calendar.MINUTE, -delayMinutes)
 
-        if (notificationTime.timeInMillis <= System.currentTimeMillis()) {
-            Log.d("NotificationUtils", "Skipping notification for past schedule: ${schedule.nama_mata_kuliah}")
-            return
+        val systemNow = System.currentTimeMillis()
+        val timeDiff = notificationTime.timeInMillis - systemNow
+
+        // Format waktu dalam bentuk yang mudah dibaca
+        val formatter = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
+        val readableNotificationTime = formatter.format(notificationTime.time)
+        val readableSystemTime = formatter.format(systemNow)
+
+        Log.d("NotificationUtils", "System time        : $readableSystemTime")
+        Log.d("NotificationUtils", "Notification time  : $readableNotificationTime")
+        Log.d("NotificationUtils", "Trigger in (ms)    : $timeDiff")
+
+        val MIN_TRIGGER_DELAY_MS = 15_000L // 5 detik
+
+        if (timeDiff < MIN_TRIGGER_DELAY_MS) {
+            Log.w("NotificationUtils", "Rescheduling: alarm too close or already passed for ${schedule.nama_mata_kuliah}, pushing +5 minutes")
+
+            // Geser alarm +5 menit ke depan dari sekarang
+            notificationTime.timeInMillis = systemNow + 2 * 60 * 1000 // 5 menit
+            startTimeCalendar.timeInMillis = notificationTime.timeInMillis + delayMinutes * 60 * 1000
+
+            val updatedTimeDiff = notificationTime.timeInMillis - System.currentTimeMillis()
+            if (updatedTimeDiff < MIN_TRIGGER_DELAY_MS) {
+                Log.w("NotificationUtils", "Skipping: even adjusted alarm is too close for ${schedule.nama_mata_kuliah}")
+                return
+            }
         }
+
 
         val notificationId = UUID.randomUUID().toString()
 
-        // Create intent for notification tap action
         val intent = Intent(context, NotificationDetailActivity::class.java).apply {
             putExtra("notification_id", notificationId)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
 
-        // Create pending intent for notification tap
         val pendingIntent = PendingIntent.getActivity(
             context,
             notificationId.hashCode(),
@@ -91,15 +133,12 @@ object NotificationUtils {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // Create intent for alarm receiver - PASS SCHEDULE DATA
         val alarmIntent = Intent(context, AlarmReceiver::class.java).apply {
             putExtra("notification_id", notificationId)
             putExtra("title", "Upcoming Class: ${schedule.nama_mata_kuliah}")
-            putExtra("message", "You have ${schedule.nama_mata_kuliah} class in ${delayMinutes} minutes at room ${schedule.ruang}")
+            putExtra("message", "You have ${schedule.nama_mata_kuliah} class in $delayMinutes minutes at room ${schedule.ruang}")
             putExtra("user_id", currentUser.uid)
-
-            // Pass schedule data for saving to history later
-            putExtra("schedule_id", schedule.id_dosen + "_" + schedule.kode_mata_kuliah + "_" + schedule.kelas)
+            putExtra("schedule_id", "${schedule.id_dosen}_${schedule.kode_mata_kuliah}_${schedule.kelas}")
             putExtra("scheduled_time", notificationTime.timeInMillis)
             putExtra("actual_schedule_time", startTimeCalendar.timeInMillis)
             putExtra("room", schedule.ruang)
@@ -107,7 +146,6 @@ object NotificationUtils {
             putExtra("class_name", schedule.kelas)
         }
 
-        // Create pending intent for alarm
         val alarmPendingIntent = PendingIntent.getBroadcast(
             context,
             notificationId.hashCode(),
@@ -115,7 +153,6 @@ object NotificationUtils {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // Schedule the alarm
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             alarmManager.setExactAndAllowWhileIdle(
                 AlarmManager.RTC_WAKEUP,
@@ -130,10 +167,7 @@ object NotificationUtils {
             )
         }
 
-        Log.d("NotificationUtils", "Scheduled notification for ${schedule.nama_mata_kuliah} at ${notificationTime.time}")
-
-        // REMOVED: No longer save notification to database here
-        // Only schedule the alarm, save to database when notification actually shows
+        Log.d("NotificationUtils", "✅ Scheduled alarm for ${schedule.nama_mata_kuliah} at $readableNotificationTime")
     }
 
     // Show a notification immediately

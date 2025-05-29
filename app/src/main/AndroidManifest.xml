@@ -11,6 +11,8 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
 
     <application
         android:allowBackup="true"
@@ -57,18 +59,24 @@
             android:parentActivityName=".ui.main.MainActivity" />
 
         <!-- Broadcast receivers for notifications -->
-        <receiver android:name=".utils.AlarmReceiver" />
+        <receiver android:name=".utils.AlarmReceiver" android:exported="true"/>
         <receiver android:name=".utils.SnoozeReceiver" />
         <receiver android:name=".utils.DismissReceiver" />
 
         <!-- Boot receiver to reschedule notifications after device restart -->
         <receiver
             android:name=".utils.BootReceiver"
-            android:exported="true">
+            android:enabled="true"
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
+
+        <service
+            android:name=".service.RealtimeScheduleService"
+            android:exported="false"
+            android:foregroundServiceType="location" />
 
     </application>
 
