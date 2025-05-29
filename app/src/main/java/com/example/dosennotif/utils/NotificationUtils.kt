@@ -33,9 +33,6 @@ object NotificationUtils {
 
     private val repository = ScheduleRepository()
 
-    // ✅ Set jadwal yang sudah dijadwalkan (agar tidak double)
-    private val scheduledNotifications = mutableSetOf<String>()
-
     fun createNotificationChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val importance = NotificationManager.IMPORTANCE_HIGH
@@ -50,24 +47,10 @@ object NotificationUtils {
         }
     }
 
-    // ✅ Membuat key unik dari jadwal
-    private fun getUniqueScheduleKey(schedule: Schedule): String {
-        return "${schedule.id_dosen}_${schedule.kode_mata_kuliah}_${schedule.kelas}_${schedule.hari}"
-    }
-
     // Schedule a notification for a specific time
     fun scheduleNotification(context: Context, schedule: Schedule, delayMinutes: Int) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val currentUser = FirebaseAuth.getInstance().currentUser ?: return
-
-        val scheduleKey = getUniqueScheduleKey(schedule)
-
-        // ✅ Skip jika sudah dijadwalkan
-        if (scheduledNotifications.contains(scheduleKey)) {
-            Log.d("NotificationUtils", "🔁 Skipped: already scheduled for $scheduleKey")
-            return
-        }
-        scheduledNotifications.add(scheduleKey)
 
         val startTimeCalendar = Calendar.getInstance().apply {
             val hour = schedule.jam_mulai.split(":")[0].toInt()
@@ -294,3 +277,4 @@ object NotificationUtils {
         }
     }
 }
+pengecekan agar tidak terkirim terus menerus
