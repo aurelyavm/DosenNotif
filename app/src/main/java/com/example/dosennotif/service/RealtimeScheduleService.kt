@@ -90,6 +90,7 @@ class RealtimeScheduleService : Service() {
 //                                )
 
                                 // Schedule notification via NotificationUtils
+
                                 NotificationUtils.scheduleNotification(
                                     applicationContext,
                                     schedule,

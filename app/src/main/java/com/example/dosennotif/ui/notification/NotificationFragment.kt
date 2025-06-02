@@ -48,13 +48,7 @@ class NotificationFragment : Fragment() {
 
     private fun setupRecyclerView() {
         notificationAdapter = NotificationAdapter(emptyList()) { notification ->
-            // Handle notification click
-            val intent = Intent(requireContext(), NotificationDetailActivity::class.java).apply {
-                putExtra("notification_id", notification.id)
-            }
-            startActivity(intent)
-
-            // Mark as read
+            // Hanya mark as read, tanpa buka detail
             viewModel.markNotificationAsRead(notification.id)
         }
 

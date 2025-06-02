@@ -1,0 +1,65 @@
+@startuml "Aplikasi DosenNotif - Model"
+!pragma layout smetana
+skinparam classAttributeIconSize 0
+skinparam backgroundColor white
+skinparam ArrowColor #666666
+
+package "com.example.dosennotif.model" #DEEBD8 {
+  class User {
+    + id: String
+    + name: String
+    + email: String
+    + nidn: String
+    + createdAt: Long
+    + notificationPreferences: NotificationPreferences
+  }
+
+  class NotificationPreferences {
+    + enabled: Boolean
+    + soundEnabled: Boolean
+    + vibrationEnabled: Boolean
+    + distanceThresholds: Map<String, Int>
+  }
+
+  class Schedule {
+    + id_dosen: String
+    + nama_dosen: String
+    + nidn_dosen: String
+    + kode_mata_kuliah: String
+    + nama_mata_kuliah: String
+    + kelas: String
+    + hari: String
+    + jam_mulai: String
+    + jam_selesai: String
+    + ruang: String
+    + getFormattedDay(): String
+    + getTimeRange(): String
+    + getDayOfWeekNumber(): Int
+  }
+
+  class ScheduleNotification {
+    + id: String
+    + scheduleId: String
+    + title: String
+    + message: String
+    + scheduledTime: Long
+    + actualScheduleTime: Long
+    + room: String
+    + courseName: String
+    + className: String
+    + isRead: Boolean
+    + createdAt: Long
+  }
+
+  class ScheduleResponse {
+    + status: String
+    + message: String
+    + data: List<Schedule>?
+  }
+}
+
+' Relasi
+User "1" *-- "1" NotificationPreferences: memiliki
+ScheduleResponse "1" *-- "*" Schedule: berisi
+
+@enduml

@@ -1,7 +1,5 @@
 package com.example.dosennotif.viewmodel
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
@@ -19,10 +17,6 @@ class NotificationViewModel : ViewModel() {
     // StateFlow for notifications
     private val _notificationsState = MutableStateFlow<Resource<List<ScheduleNotification>>>(Resource.Loading)
     val notificationsState = _notificationsState.asStateFlow()
-
-    // LiveData for selected notification
-    private val _selectedNotification = MutableLiveData<ScheduleNotification?>()
-    val selectedNotification: LiveData<ScheduleNotification?> = _selectedNotification
 
     init {
         loadNotifications()
@@ -46,32 +40,6 @@ class NotificationViewModel : ViewModel() {
         }
     }
 
-    fun getNotificationById(notificationId: String) {
-        viewModelScope.launch {
-            val currentState = _notificationsState.value
-
-            if (currentState is Resource.Success) {
-                val notification = currentState.data.find { it.id == notificationId }
-                _selectedNotification.value = notification
-
-                // Mark notification as read
-                notification?.let { markNotificationAsRead(it.id) }
-            } else {
-                // Load notifications first, then get the notification
-                loadNotifications()
-
-                val newState = _notificationsState.value
-                if (newState is Resource.Success) {
-                    val notification = newState.data.find { it.id == notificationId }
-                    _selectedNotification.value = notification
-
-                    // Mark notification as read
-                    notification?.let { markNotificationAsRead(it.id) }
-                }
-            }
-        }
-    }
-
     fun markNotificationAsRead(notificationId: String) {
         val currentUser = auth.currentUser ?: return
 
@@ -81,10 +49,6 @@ class NotificationViewModel : ViewModel() {
             // Update the notifications state to reflect the change
             loadNotifications()
         }
-    }
-
-    fun clearSelectedNotification() {
-        _selectedNotification.value = null
     }
 
     // Get unread notification count

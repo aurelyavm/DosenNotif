@@ -17,7 +17,7 @@ import com.example.dosennotif.R
 import com.example.dosennotif.model.Schedule
 import com.example.dosennotif.model.ScheduleNotification
 import com.example.dosennotif.repository.ScheduleRepository
-import com.example.dosennotif.ui.notification.NotificationDetailActivity
+import com.example.dosennotif.ui.main.MainActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -67,6 +67,7 @@ object NotificationUtils {
             } else {
                 7 - (currentDayOfWeek - dayOfWeekFromSchedule)
             }
+
             add(Calendar.DAY_OF_YEAR, daysToAdd)
         }
 
@@ -104,8 +105,9 @@ object NotificationUtils {
 
         val notificationId = UUID.randomUUID().toString()
 
-        val intent = Intent(context, NotificationDetailActivity::class.java).apply {
-            putExtra("notification_id", notificationId)
+        val intent = Intent(context, MainActivity::class.java).apply {
+            // Bisa tambah extra untuk navigate ke notification tab
+            putExtra("navigate_to", "notification")
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
 
@@ -170,8 +172,9 @@ object NotificationUtils {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         // Create intent for notification tap action
-        val intent = Intent(context, NotificationDetailActivity::class.java).apply {
-            putExtra("notification_id", notificationId)
+        val intent = Intent(context, MainActivity::class.java).apply {
+            // Bisa tambah extra untuk navigate ke notification tab
+            putExtra("navigate_to", "notification")
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
 
@@ -277,4 +280,4 @@ object NotificationUtils {
         }
     }
 }
-pengecekan agar tidak terkirim terus menerus
+//pengecekan agar tidak terkirim terus menerus

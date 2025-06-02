@@ -1,0 +1,103 @@
+@startuml "DosenNotif - Notification Flow"
+!pragma layout smetana
+skinparam classAttributeIconSize 0
+skinparam backgroundColor white
+skinparam ArrowColor #666666
+
+package "UI" #FFF9D5 {
+  class HomeFragment {
+    - viewModel: HomeViewModel
+    + requestLocationUpdates()
+  }
+
+  class NotificationFragment {
+    - viewModel: NotificationViewModel
+    + observeNotifications()
+  }
+
+  class NotificationDetailActivity {
+    - viewModel: NotificationViewModel
+    + observeSelectedNotification()
+  }
+}
+
+package "ViewModel" #F9E4D5 {
+  class HomeViewModel {
+    - repository: ScheduleRepository
+    - _currentLocation: MutableLiveData<Location>
+    - _distanceFromCampus: MutableLiveData<Float>
+    + updateCurrentLocation(location: Location)
+    - scheduleNotifications(schedules: List<Schedule>)
+  }
+
+  class NotificationViewModel {
+    - repository: ScheduleRepository
+    + notificationsState: StateFlow<Resource<List<ScheduleNotification>>>
+    + selectedNotification: LiveData<ScheduleNotification>
+    + loadNotifications()
+    + getNotificationById(notificationId: String)
+    + markNotificationAsRead(notificationId: String)
+  }
+}
+
+package "Repository" #D5E8F9 {
+  class ScheduleRepository {
+    + saveNotification(userId: String, notification: ScheduleNotification): Resource<String>
+    + getUserNotifications(userId: String): Resource<List<ScheduleNotification>>
+    + markNotificationAsRead(userId: String, notificationId: String): Resource<Unit>
+  }
+}
+
+package "Utils" #E9E9E9 {
+  class LocationUtils {
+    + calculateDistanceFromCampus(latitude: Double, longitude: Double): Float
+    + getNotificationDelay(distanceInKm: Float): Int
+    + getLocationUpdates(context: Context): Flow<Location>
+  }
+
+  class NotificationUtils {
+    - repository: ScheduleRepository
+    + createNotificationChannel(context: Context)
+    + scheduleNotification(context: Context, schedule: Schedule, delayMinutes: Int)
+    + showNotification(context: Context, notificationId: String, title: String, message: String)
+  }
+
+  class AlarmReceiver {
+    + onReceive(context: Context?, intent: Intent?)
+  }
+
+  class SnoozeReceiver {
+    + onReceive(context: Context?, intent: Intent?)
+  }
+}
+
+package "Model" #DEEBD8 {
+  class Schedule
+  class ScheduleNotification
+  class User {
+    + notificationPreferences: NotificationPreferences
+  }
+  class NotificationPreferences {
+    + distanceThresholds: Map<String, Int>
+  }
+}
+
+' Relasi alur notifikasi
+HomeFragment --> HomeViewModel : uses
+HomeViewModel --> LocationUtils : gets location & distance
+HomeViewModel --> NotificationUtils : schedules notifications
+LocationUtils ..> NotificationUtils : provides delay calculation
+NotificationUtils --> ScheduleRepository : saves notification
+NotificationUtils --> AlarmReceiver : sets alarm for
+AlarmReceiver ..> NotificationUtils : triggers showNotification
+SnoozeReceiver ..> AlarmReceiver : reschedules
+
+NotificationFragment --> NotificationViewModel : observes
+NotificationDetailActivity --> NotificationViewModel : gets details
+NotificationViewModel --> ScheduleRepository : gets & updates notifications
+
+User "1" *-- "1" NotificationPreferences : contains
+NotificationUtils ..> ScheduleNotification : creates
+ScheduleRepository ..> ScheduleNotification : manages
+
+@enduml

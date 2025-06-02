@@ -1,0 +1,38 @@
+@startuml "DosenNotif - Login Sequence"
+skinparam backgroundColor white
+skinparam sequenceArrowThickness 2
+skinparam roundcorner 5
+skinparam sequenceParticipant underline
+
+actor User
+participant "LoginActivity" as LA
+participant "FirebaseAuth" as FA
+participant "MainActivity" as MA
+
+User -> LA: Input email/password
+activate LA
+
+LA -> LA: Validate input
+activate LA #DarkGray
+LA --> LA: Input valid
+deactivate LA
+
+LA -> FA: signInWithEmailAndPassword(email, password)
+activate FA
+
+alt Successful Login
+    FA --> LA: Success response
+    LA -> LA: Show success message
+    LA -> MA: Navigate to MainActivity
+    MA -> MA: Initialize and display dashboard
+    LA --> User: Login successful, show main screen
+else Failed Login
+    FA --> LA: Error response
+    LA -> LA: Show error message
+    LA --> User: Display error message
+end
+
+deactivate FA
+deactivate LA
+
+@enduml

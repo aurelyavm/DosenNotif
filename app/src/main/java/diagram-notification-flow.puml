@@ -1,0 +1,92 @@
+@startuml "Aplikasi DosenNotif - Notification Flow"
+!pragma layout smetana
+skinparam classAttributeIconSize 0
+skinparam backgroundColor white
+skinparam ArrowColor #666666
+
+package "com.example.dosennotif.utils" #E9E9E9 {
+  object NotificationUtils {
+    + createNotificationChannel(context: Context)
+    + scheduleNotification(context: Context, schedule: Schedule, delayMinutes: Int)
+    + showNotification(context: Context, id: String, title: String, message: String)
+  }
+
+  class AlarmReceiver {
+    + onReceive(context: Context?, intent: Intent?)
+  }
+
+  class SnoozeReceiver {
+    + onReceive(context: Context?, intent: Intent?)
+  }
+
+  class DismissReceiver {
+    + onReceive(context: Context?, intent: Intent?)
+  }
+
+  object LocationUtils {
+    + calculateDistanceFromCampus(latitude: Double, longitude: Double): Float
+    + getNotificationDelay(distanceInKm: Float): Int
+  }
+}
+
+package "com.example.dosennotif.repository" #D5E8F9 {
+  class ScheduleRepository {
+    + saveNotification(userId: String, notification: ScheduleNotification): Resource<String>
+    + getUserNotifications(userId: String): Resource<List<ScheduleNotification>>
+  }
+}
+
+package "com.example.dosennotif.model" #DEEBD8 {
+  class Schedule
+  class ScheduleNotification
+  class User {
+    + notificationPreferences: NotificationPreferences
+  }
+  class NotificationPreferences {
+    + enabled: Boolean
+    + soundEnabled: Boolean
+    + vibrationEnabled: Boolean
+    + distanceThresholds: Map<String, Int>
+  }
+}
+
+package "com.example.dosennotif.viewmodel" #F9E4D5 {
+  class HomeViewModel {
+    - scheduleNotifications(schedules: List<Schedule>)
+    + updateCurrentLocation(location: Location)
+  }
+
+  class NotificationViewModel {
+    + loadNotifications()
+    + getNotificationById(notificationId: String)
+    + markNotificationAsRead(notificationId: String)
+  }
+}
+
+package "com.example.dosennotif.ui.notification" #FFF9D5 {
+  class NotificationFragment
+  class NotificationDetailActivity
+  class NotificationAdapter
+}
+
+' Relasi
+NotificationUtils --> ScheduleRepository: uses
+NotificationUtils --> AlarmReceiver: schedules
+NotificationUtils --> ScheduleNotification: creates
+LocationUtils ..> NotificationUtils: calculates delay
+
+AlarmReceiver ..> NotificationUtils: calls showNotification
+SnoozeReceiver ..> AlarmReceiver: reschedules
+DismissReceiver ..> NotificationUtils: dismisses notification
+
+HomeViewModel ..> NotificationUtils: schedules notifications
+HomeViewModel ..> LocationUtils: gets distance
+
+NotificationViewModel --> ScheduleRepository: gets notifications
+NotificationFragment --> NotificationViewModel: observes
+NotificationDetailActivity --> NotificationViewModel: observes
+
+User *-- NotificationPreferences: contains
+NotificationFragment --> NotificationAdapter: updates
+
+@enduml

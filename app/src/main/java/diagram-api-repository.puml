@@ -1,0 +1,54 @@
+@startuml "Aplikasi DosenNotif - API & Repository"
+!pragma layout smetana
+skinparam classAttributeIconSize 0
+skinparam backgroundColor white
+skinparam ArrowColor #666666
+
+package "com.example.dosennotif.api" #D5E1F9 {
+  object ApiClient {
+    - BASE_URL: String
+    - CUSTOM_HEADERS: Map<String, String>
+    + create(): ApiService
+  }
+
+  interface ApiService {
+    + getLecturerSchedule(): ScheduleResponse
+  }
+
+  class CustomHeadersInterceptor {
+    - headers: Map<String, String>
+    - authorizationHeader: String
+    + intercept(chain: Chain): Response
+  }
+}
+
+package "com.example.dosennotif.repository" #D5E8F9 {
+  class ScheduleRepository {
+    - apiService: ApiService
+    - firestore: FirebaseFirestore
+    + getLecturerSchedule(nidn: String, period: String): Resource<List<Schedule>>
+    + saveNotification(userId: String, notification: ScheduleNotification): Resource<String>
+    + getUserNotifications(userId: String): Resource<List<ScheduleNotification>>
+    + markNotificationAsRead(userId: String, notificationId: String): Resource<Unit>
+  }
+}
+
+package "com.example.dosennotif.model" #DEEBD8 {
+  class Schedule
+  class ScheduleNotification
+  class ScheduleResponse
+}
+
+package "com.example.dosennotif.utils" #E9E9E9 {
+  class Resource
+}
+
+' Relasi
+ApiClient --> ApiService: creates
+ScheduleRepository --> ApiClient: uses
+ScheduleRepository --> Schedule: manages
+ScheduleRepository --> ScheduleNotification: manages
+ScheduleRepository --> Resource: returns
+ApiService ..> ScheduleResponse: returns
+
+@enduml
