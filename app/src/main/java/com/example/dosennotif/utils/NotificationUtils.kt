@@ -25,6 +25,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 import java.util.UUID
+import kotlinx.coroutines.tasks.await
 
 object NotificationUtils {
     private const val CHANNEL_ID = "schedule_notification_channel"
@@ -48,228 +49,226 @@ object NotificationUtils {
     }
 
     // Schedule a notification for a specific time
-    fun scheduleNotification(context: Context, schedule: Schedule, delayMinutes: Int) {
-        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val currentUser = FirebaseAuth.getInstance().currentUser ?: return
+fun scheduleNotification(context: Context, schedule: Schedule, delayMinutes: Int) {
+    val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+    val currentUser = FirebaseAuth.getInstance().currentUser ?: return
 
-        val startTimeCalendar = Calendar.getInstance().apply {
-            val hour = schedule.jam_mulai.split(":")[0].toInt()
-            val minute = schedule.jam_mulai.split(":")[1].toInt()
-            set(Calendar.HOUR_OF_DAY, hour)
-            set(Calendar.MINUTE, minute)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
+    val dayOfWeek = schedule.getDayOfWeekNumber()
+    val scheduleHour = schedule.jam_mulai.split(":")[0].toInt()
+    val scheduleMinute = schedule.jam_mulai.split(":")[1].toInt()
 
-            val dayOfWeekFromSchedule = schedule.getDayOfWeekNumber()
-            val currentDayOfWeek = get(Calendar.DAY_OF_WEEK)
-            val daysToAdd = if (dayOfWeekFromSchedule >= currentDayOfWeek) {
-                dayOfWeekFromSchedule - currentDayOfWeek
-            } else {
-                7 - (currentDayOfWeek - dayOfWeekFromSchedule)
-            }
+    val startTime = Calendar.getInstance().apply {
+        set(Calendar.HOUR_OF_DAY, scheduleHour)
+        set(Calendar.MINUTE, scheduleMinute)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
 
-            add(Calendar.DAY_OF_YEAR, daysToAdd)
-        }
-
-        val notificationTime = startTimeCalendar.clone() as Calendar
-        notificationTime.add(Calendar.MINUTE, -delayMinutes)
-
-        val systemNow = System.currentTimeMillis()
-        val timeDiff = notificationTime.timeInMillis - systemNow
-
-        // Format waktu dalam bentuk yang mudah dibaca
-        val formatter = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
-        val readableNotificationTime = formatter.format(notificationTime.time)
-        val readableSystemTime = formatter.format(systemNow)
-
-        Log.d("NotificationUtils", "System time        : $readableSystemTime")
-        Log.d("NotificationUtils", "Notification time  : $readableNotificationTime")
-        Log.d("NotificationUtils", "Trigger in (ms)    : $timeDiff")
-
-        val MIN_TRIGGER_DELAY_MS = 15_000L // 5 detik
-
-        if (timeDiff < MIN_TRIGGER_DELAY_MS) {
-            Log.w("NotificationUtils", "Rescheduling: alarm too close or already passed for ${schedule.nama_mata_kuliah}, pushing +5 minutes")
-
-            // Geser alarm +5 menit ke depan dari sekarang
-            notificationTime.timeInMillis = systemNow + 2 * 60 * 1000 // 5 menit
-            startTimeCalendar.timeInMillis = notificationTime.timeInMillis + delayMinutes * 60 * 1000
-
-            val updatedTimeDiff = notificationTime.timeInMillis - System.currentTimeMillis()
-            if (updatedTimeDiff < MIN_TRIGGER_DELAY_MS) {
-                Log.w("NotificationUtils", "Skipping: even adjusted alarm is too close for ${schedule.nama_mata_kuliah}")
-                return
-            }
-        }
-
-
-        val notificationId = UUID.randomUUID().toString()
-
-        val intent = Intent(context, MainActivity::class.java).apply {
-            // Bisa tambah extra untuk navigate ke notification tab
-            putExtra("navigate_to", "notification")
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        }
-
-        val pendingIntent = PendingIntent.getActivity(
-            context,
-            notificationId.hashCode(),
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val alarmIntent = Intent(context, AlarmReceiver::class.java).apply {
-            putExtra("notification_id", notificationId)
-            putExtra("title", "Upcoming Class: ${schedule.nama_mata_kuliah}")
-            putExtra("message", "You have ${schedule.nama_mata_kuliah} class in $delayMinutes minutes at room ${schedule.ruang}")
-            putExtra("user_id", currentUser.uid)
-            putExtra("schedule_id", "${schedule.id_dosen}_${schedule.kode_mata_kuliah}_${schedule.kelas}")
-            putExtra("scheduled_time", notificationTime.timeInMillis)
-            putExtra("actual_schedule_time", startTimeCalendar.timeInMillis)
-            putExtra("room", schedule.ruang)
-            putExtra("course_name", schedule.nama_mata_kuliah)
-            putExtra("class_name", schedule.kelas)
-        }
-
-        val alarmPendingIntent = PendingIntent.getBroadcast(
-            context,
-            notificationId.hashCode(),
-            alarmIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            alarmManager.setExactAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP,
-                notificationTime.timeInMillis,
-                alarmPendingIntent
-            )
-        } else {
-            alarmManager.setExact(
-                AlarmManager.RTC_WAKEUP,
-                notificationTime.timeInMillis,
-                alarmPendingIntent
-            )
-        }
-
-        Log.d("NotificationUtils", "✅ Scheduled alarm for ${schedule.nama_mata_kuliah} at $readableNotificationTime")
+        val today = get(Calendar.DAY_OF_WEEK)
+        val daysUntil = (dayOfWeek + 7 - today) % 7
+        add(Calendar.DAY_OF_YEAR, if (daysUntil == 0 && timeInMillis < System.currentTimeMillis()) 7 else daysUntil)
     }
+
+    val notifyTime = (startTime.clone() as Calendar).apply {
+        add(Calendar.MINUTE, -delayMinutes)
+    }
+
+    val now = System.currentTimeMillis()
+    val triggerIn = notifyTime.timeInMillis - now
+
+    // Skip scheduling if notification is too close
+    if (triggerIn < 15_000L) {
+        Log.w("NotificationUtils", "⏩ Skip schedule: notification for ${schedule.nama_mata_kuliah} is too close or already passed.")
+        return
+    }
+
+    // Cek apakah sudah pernah dijadwalkan berdasarkan scheduleId
+    CoroutineScope(Dispatchers.IO).launch {
+        try {
+            val db = FirebaseFirestore.getInstance()
+            val scheduleId = "${schedule.id_dosen}_${schedule.kode_mata_kuliah}_${schedule.kelas}"
+            val snapshot = db.collection("users")
+                .document(currentUser.uid)
+                .collection("notifications")
+                .whereEqualTo("scheduleId", scheduleId)
+                .limit(1)
+                .get()
+                .await()
+
+            if (!snapshot.isEmpty) {
+                Log.d("NotificationUtils", "❌ Jadwal sudah pernah dijadwalkan: $scheduleId")
+                return@launch
+            }
+
+            // Schedule alarm
+            val notificationId = UUID.randomUUID().toString()
+
+            val alarmIntent = Intent(context, AlarmReceiver::class.java).apply {
+                putExtra("notification_id", notificationId)
+                putExtra("title", "Upcoming Class: ${schedule.nama_mata_kuliah}")
+                putExtra("message", "You have ${schedule.nama_mata_kuliah} class in $delayMinutes minutes at room ${schedule.ruang}")
+                putExtra("user_id", currentUser.uid)
+                putExtra("schedule_id", scheduleId)
+                putExtra("scheduled_time", notifyTime.timeInMillis)
+                putExtra("actual_schedule_time", startTime.timeInMillis)
+                putExtra("room", schedule.ruang)
+                putExtra("course_name", schedule.nama_mata_kuliah)
+                putExtra("class_name", schedule.kelas)
+            }
+
+            val pendingIntent = PendingIntent.getBroadcast(
+                context,
+                notificationId.hashCode(),
+                alarmIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    notifyTime.timeInMillis,
+                    pendingIntent
+                )
+            } else {
+                alarmManager.setExact(
+                    AlarmManager.RTC_WAKEUP,
+                    notifyTime.timeInMillis,
+                    pendingIntent
+                )
+            }
+
+            val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+            Log.d("NotificationUtils", "✅ Alarm dijadwalkan: ${formatter.format(notifyTime.time)} untuk ${schedule.nama_mata_kuliah}")
+
+        } catch (e: Exception) {
+            Log.e("NotificationUtils", "❌ Gagal menjadwalkan notifikasi: ${e.message}")
+        }
+    }
+}
+
 
     // Show a notification immediately
-    fun showNotification(
-        context: Context,
-        notificationId: String,
-        title: String,
-        message: String,
-        userId: String? = null,
-        scheduleId: String? = null,
-        scheduledTime: Long? = null,
-        actualScheduleTime: Long? = null,
-        room: String? = null,
-        courseName: String? = null,
-        className: String? = null
-    ) {
-        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+fun showNotification(
+    context: Context,
+    notificationId: String,
+    title: String,
+    message: String,
+    userId: String? = null,
+    scheduleId: String? = null,
+    scheduledTime: Long? = null,
+    actualScheduleTime: Long? = null,
+    room: String? = null,
+    courseName: String? = null,
+    className: String? = null
+) {
+    val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        // Create intent for notification tap action
-        val intent = Intent(context, MainActivity::class.java).apply {
-            // Bisa tambah extra untuk navigate ke notification tab
-            putExtra("navigate_to", "notification")
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        }
+    val intent = Intent(context, MainActivity::class.java).apply {
+        putExtra("navigate_to", "notification")
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+    }
 
-        // Create pending intent for notification tap
-        val pendingIntent = PendingIntent.getActivity(
-            context,
-            notificationId.hashCode(),
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    val pendingIntent = PendingIntent.getActivity(
+        context,
+        notificationId.hashCode(),
+        intent,
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
+
+    val snoozeIntent = Intent(context, SnoozeReceiver::class.java).apply {
+        putExtra("notification_id", notificationId)
+        putExtra("title", title)
+        putExtra("message", message)
+        putExtra("user_id", userId)
+    }
+
+    val snoozePendingIntent = PendingIntent.getBroadcast(
+        context,
+        (notificationId + "_snooze").hashCode(),
+        snoozeIntent,
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
+
+    val dismissIntent = Intent(context, DismissReceiver::class.java).apply {
+        putExtra("notification_id", notificationId)
+    }
+
+    val dismissPendingIntent = PendingIntent.getBroadcast(
+        context,
+        (notificationId + "_dismiss").hashCode(),
+        dismissIntent,
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
+
+    val notificationBuilder = NotificationCompat.Builder(context, CHANNEL_ID)
+        .setSmallIcon(R.drawable.ic_notifications)
+        .setContentTitle(title)
+        .setContentText(message)
+        .setPriority(NotificationCompat.PRIORITY_HIGH)
+        .setAutoCancel(true)
+        .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
+        .setContentIntent(pendingIntent)
+        .setColor(ContextCompat.getColor(context, R.color.colorPrimary))
+        .addAction(R.drawable.ic_snooze, "Snooze 10 min", snoozePendingIntent)
+        .addAction(R.drawable.ic_dismiss, "Dismiss", dismissPendingIntent)
+
+    notificationManager.notify(notificationId.hashCode(), notificationBuilder.build())
+
+    // Cek & simpan hanya jika belum ada
+    userId?.let { uid ->
+        val notificationData = ScheduleNotification(
+            id = notificationId,
+            scheduleId = scheduleId ?: "",
+            title = title,
+            message = message,
+            scheduledTime = scheduledTime ?: System.currentTimeMillis(),
+            actualScheduleTime = actualScheduleTime ?: System.currentTimeMillis(),
+            room = room ?: "",
+            courseName = courseName ?: extractCourseNameFromTitle(title),
+            className = className ?: "",
+            isRead = false,
+            createdAt = System.currentTimeMillis()
         )
 
-        // Create snooze intent
-        val snoozeIntent = Intent(context, SnoozeReceiver::class.java).apply {
-            putExtra("notification_id", notificationId)
-            putExtra("title", title)
-            putExtra("message", message)
-            putExtra("user_id", userId)
-        }
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val db = FirebaseFirestore.getInstance()
+                val snapshot = db.collection("users")
+                    .document(uid)
+                    .collection("notifications")
+                    .whereEqualTo("scheduleId", scheduleId)
+                    .whereEqualTo("actualScheduleTime", actualScheduleTime)
+                    .limit(1)
+                    .get()
+                    .await()
 
-        // Create pending intent for snooze action
-        val snoozePendingIntent = PendingIntent.getBroadcast(
-            context,
-            (notificationId + "_snooze").hashCode(),
-            snoozeIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        // Create dismiss intent
-        val dismissIntent = Intent(context, DismissReceiver::class.java).apply {
-            putExtra("notification_id", notificationId)
-        }
-
-        // Create pending intent for dismiss action
-        val dismissPendingIntent = PendingIntent.getBroadcast(
-            context,
-            (notificationId + "_dismiss").hashCode(),
-            dismissIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        // Build notification
-        val notificationBuilder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_notifications)
-            .setContentTitle(title)
-            .setContentText(message)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setAutoCancel(true)
-            .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
-            .setContentIntent(pendingIntent)
-            .setColor(ContextCompat.getColor(context, R.color.colorPrimary))
-            .addAction(R.drawable.ic_snooze, "Snooze 10 min", snoozePendingIntent)
-            .addAction(R.drawable.ic_dismiss, "Dismiss", dismissPendingIntent)
-
-        // Show notification
-        notificationManager.notify(notificationId.hashCode(), notificationBuilder.build())
-
-        // SAVE TO DATABASE - Only when notification is actually shown
-        userId?.let { uid ->
-            val notificationData = ScheduleNotification(
-                id = notificationId,
-                scheduleId = scheduleId ?: "",
-                title = title,
-                message = message,
-                scheduledTime = scheduledTime ?: System.currentTimeMillis(),
-                actualScheduleTime = actualScheduleTime ?: System.currentTimeMillis(),
-                room = room ?: "",
-                courseName = courseName ?: extractCourseNameFromTitle(title),
-                className = className ?: "",
-                isRead = false,
-                createdAt = System.currentTimeMillis()  // When notification actually appeared
-            )
-
-            CoroutineScope(Dispatchers.IO).launch {
-                try {
-                    repository.saveNotification(uid, notificationData)
-                    Log.d("NotificationUtils", "Notification saved to history: $notificationId")
-                } catch (e: Exception) {
-                    Log.e("NotificationUtils", "Failed to save notification to history: ${e.message}")
+                if (!snapshot.isEmpty) {
+                    Log.d("NotificationUtils", "❌ Sudah ada notifikasi untuk scheduleId=$scheduleId & time=$actualScheduleTime")
+                    return@launch
                 }
+
+                repository.saveNotification(uid, notificationData)
+                Log.d("NotificationUtils", "✅ Notifikasi disimpan ke Firestore: $notificationId")
+            } catch (e: Exception) {
+                Log.e("NotificationUtils", "❌ Gagal simpan notifikasi: ${e.message}")
             }
         }
-
-        // Mark notification as shown in Firestore (if needed for other purposes)
-        userId?.let {
-            FirebaseFirestore.getInstance()
-                .collection("users")
-                .document(it)
-                .collection("notifications")
-                .document(notificationId)
-                .update("isShown", true)
-                .addOnFailureListener { e ->
-                    Log.w("NotificationUtils", "Failed to update isShown flag: ${e.message}")
-                }
-        }
     }
+
+    // Tandai sebagai sudah ditampilkan (opsional)
+    userId?.let {
+        FirebaseFirestore.getInstance()
+            .collection("users")
+            .document(it)
+            .collection("notifications")
+            .document(notificationId)
+            .update("isShown", true)
+            .addOnFailureListener { e ->
+                Log.w("NotificationUtils", "Gagal update flag isShown: ${e.message}")
+            }
+    }
+}
+
+
 
     // Helper function to extract course name from title
     private fun extractCourseNameFromTitle(title: String): String {
