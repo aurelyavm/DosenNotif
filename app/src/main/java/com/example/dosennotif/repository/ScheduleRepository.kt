@@ -59,6 +59,7 @@ class ScheduleRepository {
                 }
 
                 Log.d(TAG, "Total unique schedules found: ${uniqueSchedules.size}")
+                Log.d(TAG, "check schedule: ${uniqueSchedules}")
                 Resource.Success(uniqueSchedules.toList())
             } catch (e: Exception) {
                 Log.e(TAG, "Unexpected error fetching schedules: ${e.message}", e)

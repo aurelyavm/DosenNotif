@@ -2,6 +2,7 @@ package com.example.dosennotif.viewmodel
 
 import android.app.Application
 import android.location.Location
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -107,6 +108,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         )
 
         val todayDayName = dayMapping[currentDayOfWeek]?.lowercase(Locale.getDefault())
+
         // pengecekan null
         if (schedules.isNullOrEmpty()) {
             _todaySchedules.postValue(emptyList())
@@ -117,7 +119,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }.sortedBy { schedule ->
             schedule.getStartTime()
         }
-
+        Log.d("filterToday", "${filteredSchedules}");
         _todaySchedules.postValue(filteredSchedules)
     }
 
