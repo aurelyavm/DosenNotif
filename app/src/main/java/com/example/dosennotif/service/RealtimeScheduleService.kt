@@ -50,9 +50,12 @@ class RealtimeScheduleService : Service() {
     }
 
     private suspend fun runRealtimeCheckLoop() {
+        Log.d("AuthCheck", "User: ${FirebaseAuth.getInstance().currentUser}")
+
         while (serviceScope.isActive) {
             try {
                 val currentUser = FirebaseAuth.getInstance().currentUser
+                Log.d("currentUser", "${currentUser}")
                 if (currentUser != null) {
                     val location: Location? = LocationUtils.getLastLocation(applicationContext)
                     val userData: User? = getUserData(currentUser.uid)
@@ -60,6 +63,7 @@ class RealtimeScheduleService : Service() {
 
                     if (nidn != null && location != null) {
                         val scheduleResult = repository.getLecturerSchedule(nidn)
+                        Log.d("schedule result", "runRealtimeCheckLoop:${scheduleResult} ")
                         if (scheduleResult is Resource.Success) {
                             val distance = LocationUtils.calculateDistanceFromCampus(
                                 location.latitude,
@@ -68,6 +72,7 @@ class RealtimeScheduleService : Service() {
                             val delayMinutes = LocationUtils.getNotificationDelay(distance)
 
                             scheduleResult.data.forEach { schedule ->
+                                Log.d("data schedule","schedule ${schedule}");
                                 // for testing
 //                                val adjustedSchedule = if (schedule.nama_mata_kuliah == "Sistem Basis Data") {
 //                                    schedule.copy(
