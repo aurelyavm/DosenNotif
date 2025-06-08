@@ -10,10 +10,11 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.example.dosennotif.R
 import com.example.dosennotif.databinding.FragmentProfileBinding
-import com.example.dosennotif.model.NotificationPreferences
+import com.example.dosennotif.model.Schedule
 import com.example.dosennotif.ui.auth.LoginActivity
-import com.example.dosennotif.utils.Resource
 import com.example.dosennotif.viewmodel.ProfileViewModel
+import java.text.SimpleDateFormat
+import java.util.*
 
 class ProfileFragment : Fragment() {
 
@@ -56,105 +57,112 @@ class ProfileFragment : Fragment() {
             requireActivity().finish()
         }
 
-        // Save settings button
-        binding.btnSaveDistanceSettings.setOnClickListener {
-            saveSettings()
-        }
-
-        // Notification toggle switches
-        binding.switchNotifications.setOnCheckedChangeListener { _, isChecked ->
-            updateNotificationToggles(isChecked)
+        // Refresh schedule button
+        binding.btnRefreshSchedule.setOnClickListener {
+            viewModel.refreshSchedule()
+            Toast.makeText(requireContext(), R.string.refreshing_schedule, Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun observeUserData() {
+        // Observe user data
         viewModel.userData.observe(viewLifecycleOwner) { user ->
             user?.let {
                 // Update profile info
                 binding.tvName.text = it.name
-                binding.tvNidn.text = getString(R.string.nidn_format, it.nidn)
+                binding.tvNidn.text = it.nidn
                 binding.tvEmail.text = it.email
-
-                // Update notification settings
-                val prefs = it.notificationPreferences
-                binding.switchNotifications.isChecked = prefs.enabled
-                binding.switchSound.isChecked = prefs.soundEnabled
-                binding.switchVibration.isChecked = prefs.vibrationEnabled
-
-                // Update distance thresholds
-                updateDistanceThresholds(prefs.distanceThresholds)
-
-                // Update UI state based on notification enabled
-                updateNotificationToggles(prefs.enabled)
             }
         }
 
-        // Observe saving state
-        viewModel.savingState.observe(viewLifecycleOwner) { state ->
-            when (state) {
-                is Resource.Loading -> {
-                    binding.btnSaveDistanceSettings.isEnabled = false
-                    binding.btnSaveDistanceSettings.text = getString(R.string.saving)
-                }
-                is Resource.Success -> {
-                    binding.btnSaveDistanceSettings.isEnabled = true
-                    binding.btnSaveDistanceSettings.text = getString(R.string.save_settings)
-                    Toast.makeText(requireContext(), R.string.settings_saved, Toast.LENGTH_SHORT).show()
-                }
-                is Resource.Error -> {
-                    binding.btnSaveDistanceSettings.isEnabled = true
-                    binding.btnSaveDistanceSettings.text = getString(R.string.save_settings)
-                    Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT).show()
-                }
-            }
+        // Observe schedules for stats
+        viewModel.userSchedules.observe(viewLifecycleOwner) { schedules ->
+            updateScheduleStats(schedules)
+        }
+
+        // Observe next class
+        viewModel.nextClass.observe(viewLifecycleOwner) { nextClass ->
+            updateNextClassInfo(nextClass)
         }
     }
 
-    private fun updateDistanceThresholds(thresholds: Map<String, Int>) {
-        binding.etDistance0to10.setText(thresholds["0-10"]?.toString() ?: "30")
-        binding.etDistance10to20.setText(thresholds["10-20"]?.toString() ?: "60")
-        binding.etDistance20to30.setText(thresholds["20-30"]?.toString() ?: "90")
-        binding.etDistance30to40.setText(thresholds["30-40"]?.toString() ?: "120")
-        binding.etDistance40to50.setText(thresholds["40-50"]?.toString() ?: "150")
+    private fun updateScheduleStats(schedules: List<Schedule>?) {
+        if (schedules.isNullOrEmpty()) {
+            binding.tvThisWeekCount.text = "0"
+            binding.tvTodayCount.text = "0"
+            return
+        }
+
+        val today = Calendar.getInstance()
+        val currentDayOfWeek = today.get(Calendar.DAY_OF_WEEK)
+
+        // Count today's classes
+        val todayDayName = getDayName(currentDayOfWeek)
+        val todayClasses = schedules.count { schedule ->
+            schedule.getFormattedDay().equals(todayDayName, ignoreCase = true)
+        }
+
+        // Count this week's total classes
+        val thisWeekCount = schedules.size
+
+        binding.tvTodayCount.text = todayClasses.toString()
+        binding.tvThisWeekCount.text = thisWeekCount.toString()
     }
 
-    private fun updateNotificationToggles(enabled: Boolean) {
-        binding.switchSound.isEnabled = enabled
-        binding.switchVibration.isEnabled = enabled
-        binding.cardDistanceSettings.alpha = if (enabled) 1.0f else 0.5f
-        binding.etDistance0to10.isEnabled = enabled
-        binding.etDistance10to20.isEnabled = enabled
-        binding.etDistance20to30.isEnabled = enabled
-        binding.etDistance30to40.isEnabled = enabled
-        binding.etDistance40to50.isEnabled = enabled
-        binding.btnSaveDistanceSettings.isEnabled = enabled
+    private fun updateNextClassInfo(nextClass: Schedule?) {
+        if (nextClass == null) {
+            binding.layoutNextClassInfo.visibility = View.GONE
+            binding.tvNoNextClass.visibility = View.VISIBLE
+        } else {
+            binding.layoutNextClassInfo.visibility = View.VISIBLE
+            binding.tvNoNextClass.visibility = View.GONE
+
+            binding.tvNextClassName.text = nextClass.nama_mata_kuliah
+            binding.tvNextClassTime.text = getNextClassTimeText(nextClass)
+            binding.tvNextClassRoom.text = getString(R.string.room_format, nextClass.ruang)
+        }
     }
 
-    private fun saveSettings() {
-        // Get current values
-        val notificationsEnabled = binding.switchNotifications.isChecked
-        val soundEnabled = binding.switchSound.isChecked
-        val vibrationEnabled = binding.switchVibration.isChecked
+    private fun getNextClassTimeText(schedule: Schedule): String {
+        val today = Calendar.getInstance()
+        val currentDayOfWeek = today.get(Calendar.DAY_OF_WEEK)
+        val scheduleDayOfWeek = schedule.getDayOfWeekNumber()
 
-        // Get distance thresholds
-        val distanceThresholds = mapOf(
-            Pair("0-10", binding.etDistance0to10.text.toString().toIntOrNull() ?: 30),
-            Pair("10-20", binding.etDistance10to20.text.toString().toIntOrNull() ?: 60),
-            Pair("20-30", binding.etDistance20to30.text.toString().toIntOrNull() ?: 90),
-            Pair("30-40", binding.etDistance30to40.text.toString().toIntOrNull() ?: 120),
-            Pair("40-50", binding.etDistance40to50.text.toString().toIntOrNull() ?: 150)
-        )
+        val daysUntil = when {
+            scheduleDayOfWeek > currentDayOfWeek -> scheduleDayOfWeek - currentDayOfWeek
+            scheduleDayOfWeek < currentDayOfWeek -> (7 - currentDayOfWeek) + scheduleDayOfWeek
+            else -> {
+                // Same day - check if class time has passed
+                val now = Calendar.getInstance()
+                val classTime = Calendar.getInstance().apply {
+                    val (hour, minute) = schedule.jam_mulai.split(":").map { it.toInt() }
+                    set(Calendar.HOUR_OF_DAY, hour)
+                    set(Calendar.MINUTE, minute)
+                }
+                if (now.before(classTime)) 0 else 7 // Today if not passed, next week if passed
+            }
+        }
 
-        // Create new preferences object
-        val newPreferences = NotificationPreferences(
-            enabled = notificationsEnabled,
-            soundEnabled = soundEnabled,
-            vibrationEnabled = vibrationEnabled,
-            distanceThresholds = distanceThresholds
-        )
+        val dayText = when (daysUntil) {
+            0 -> "Today"
+            1 -> "Tomorrow"
+            else -> schedule.getFormattedDay()
+        }
 
-        // Update preferences
-        viewModel.updateNotificationPreferences(newPreferences)
+        return "$dayText, ${schedule.getTimeRange()}"
+    }
+
+    private fun getDayName(dayOfWeek: Int): String {
+        return when (dayOfWeek) {
+            Calendar.SUNDAY -> "Minggu"
+            Calendar.MONDAY -> "Senin"
+            Calendar.TUESDAY -> "Selasa"
+            Calendar.WEDNESDAY -> "Rabu"
+            Calendar.THURSDAY -> "Kamis"
+            Calendar.FRIDAY -> "Jumat"
+            Calendar.SATURDAY -> "Sabtu"
+            else -> ""
+        }
     }
 
     override fun onDestroyView() {

@@ -73,29 +73,8 @@ class RealtimeScheduleService : Service() {
 
                             scheduleResult.data.forEach { schedule ->
                                 Log.d("data schedule","schedule ${schedule}");
-                                // for testing
-//                                val adjustedSchedule = if (schedule.nama_mata_kuliah == "Sistem Basis Data") {
-//                                    schedule.copy(
-//                                        jam_mulai = getTimeXMinutesFromNow(15),
-//                                        hari = getTodayName(),
-//                                        jam_selesai = "17:40:00"
-//                                    )
-//
-//                                } else {
-//                                    schedule
-//                                }
-//
-//                                Log.d("NotificationUtils", "Schedule: $adjustedSchedule, delay=$delayMinutes")
-//
-//                                // Schedule notification via NotificationUtils
-//                                NotificationUtils.scheduleNotification(
-//                                    applicationContext,
-//                                    adjustedSchedule,
-//                                    delayMinutes
-//                                )
 
                                 // Schedule notification via NotificationUtils
-
                                 NotificationUtils.scheduleNotification(
                                     applicationContext,
                                     schedule,
@@ -112,7 +91,7 @@ class RealtimeScheduleService : Service() {
         }
     }
 
-    // Fungsi untuk mendapatkan jam saat ini + 1 menit dalam format HH:mm:ss
+    // Fungsi untuk mendapatkan jam saat ini + X menit dalam format HH:mm:ss
     fun getTimeXMinutesFromNow(minutes: Int): String {
         val cal = Calendar.getInstance()
         cal.add(Calendar.MINUTE, minutes)

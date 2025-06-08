@@ -6,23 +6,30 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.example.dosennotif.model.NotificationPreferences
+import com.example.dosennotif.model.Schedule
 import com.example.dosennotif.model.User
+import com.example.dosennotif.repository.ScheduleRepository
 import com.example.dosennotif.utils.Resource
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import java.util.*
 
 class ProfileViewModel : ViewModel() {
     private val firestore = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
+    private val repository = ScheduleRepository()
 
     // LiveData for user data
     private val _userData = MutableLiveData<User?>()
     val userData: LiveData<User?> = _userData
 
-    // LiveData for saving preferences state
-    private val _savingState = MutableLiveData<Resource<Unit>>()
-    val savingState: LiveData<Resource<Unit>> = _savingState
+    // LiveData for user schedules
+    private val _userSchedules = MutableLiveData<List<Schedule>>()
+    val userSchedules: LiveData<List<Schedule>> = _userSchedules
+
+    // LiveData for next class
+    private val _nextClass = MutableLiveData<Schedule?>()
+    val nextClass: LiveData<Schedule?> = _nextClass
 
     init {
         loadUserData()
@@ -41,6 +48,9 @@ class ProfileViewModel : ViewModel() {
                 if (document != null && document.exists()) {
                     val user = document.toObject(User::class.java)
                     _userData.value = user
+
+                    // Load schedules after getting user data
+                    user?.nidn?.let { loadSchedules(it) }
                 }
             } catch (e: Exception) {
                 // Handle error
@@ -48,58 +58,65 @@ class ProfileViewModel : ViewModel() {
         }
     }
 
-    fun updateNotificationPreferences(preferences: NotificationPreferences) {
-        val currentUser = auth.currentUser ?: return
-
-        _savingState.value = Resource.Loading
-
+    private fun loadSchedules(nidn: String, period: String = "20242") {
         viewModelScope.launch {
-            try {
-                firestore.collection("users")
-                    .document(currentUser.uid)
-                    .update("notificationPreferences", preferences)
-                    .await()
-
-                // Update local user data
-                val updatedUser = _userData.value?.copy(notificationPreferences = preferences)
-                _userData.value = updatedUser
-
-                _savingState.value = Resource.Success(Unit)
-            } catch (e: Exception) {
-                _savingState.value = Resource.Error(e.message ?: "Failed to update preferences")
+            when (val result = repository.getLecturerSchedule(nidn, period)) {
+                is Resource.Success -> {
+                    _userSchedules.value = result.data
+                    findNextClass(result.data)
+                }
+                is Resource.Error -> {
+                    _userSchedules.value = emptyList()
+                    _nextClass.value = null
+                }
+                else -> {}
             }
         }
     }
 
-    fun updateDistanceThreshold(range: String, minutes: Int) {
-        val currentUser = auth.currentUser ?: return
-        val currentPreferences = _userData.value?.notificationPreferences ?: return
+    private fun findNextClass(schedules: List<Schedule>) {
+        val now = Calendar.getInstance()
+        val currentDayOfWeek = now.get(Calendar.DAY_OF_WEEK)
+        val currentTime = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE)
 
-        // Create a new map with the updated threshold
-        val updatedThresholds = currentPreferences.distanceThresholds.toMutableMap().apply {
-            this[range] = minutes
-        }
+        // Find the next upcoming class
+        var nextClass: Schedule? = null
+        var minTimeDiff = Int.MAX_VALUE
 
-        // Create new preferences with updated thresholds
-        val updatedPreferences = currentPreferences.copy(
-            distanceThresholds = updatedThresholds
-        )
+        schedules.forEach { schedule ->
+            val scheduleDayOfWeek = schedule.getDayOfWeekNumber()
+            val (hour, minute) = schedule.jam_mulai.split(":").map { it.toInt() }
+            val scheduleTimeMinutes = hour * 60 + minute
 
-        // Update Firestore
-        viewModelScope.launch {
-            try {
-                firestore.collection("users")
-                    .document(currentUser.uid)
-                    .update("notificationPreferences.distanceThresholds.$range", minutes)
-                    .await()
+            // Calculate days until this class
+            val daysUntil = when {
+                scheduleDayOfWeek > currentDayOfWeek -> scheduleDayOfWeek - currentDayOfWeek
+                scheduleDayOfWeek < currentDayOfWeek -> (7 - currentDayOfWeek) + scheduleDayOfWeek
+                else -> {
+                    // Same day
+                    if (scheduleTimeMinutes > currentTime) 0 else 7
+                }
+            }
 
-                // Update local user data
-                val updatedUser = _userData.value?.copy(notificationPreferences = updatedPreferences)
-                _userData.value = updatedUser
-            } catch (e: Exception) {
-                // Handle error
+            // Calculate total minutes until this class
+            val totalMinutesUntil = if (daysUntil == 0) {
+                scheduleTimeMinutes - currentTime
+            } else {
+                (daysUntil * 24 * 60) + scheduleTimeMinutes - currentTime
+            }
+
+            if (totalMinutesUntil > 0 && totalMinutesUntil < minTimeDiff) {
+                minTimeDiff = totalMinutesUntil
+                nextClass = schedule
             }
         }
+
+        _nextClass.value = nextClass
+    }
+
+    fun refreshSchedule() {
+        val user = _userData.value
+        user?.nidn?.let { loadSchedules(it) }
     }
 
     fun signOut() {

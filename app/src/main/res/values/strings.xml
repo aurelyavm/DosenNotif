@@ -58,6 +58,8 @@
     <!-- Notification Screen -->
     <string name="notification_history">Notification History</string>
     <string name="no_notifications">No notifications yet</string>
+    <string name="notification_subtitle">Stay updated with your class notifications</string>
+    <string name="notifications_will_appear_here">Class notifications will appear here</string>
 
     <!-- Notification Detail -->
     <string name="notification_detail">Notification Detail</string>
@@ -73,6 +75,21 @@
     <string name="enable_notifications">Enable Notifications</string>
     <string name="notification_sound">Notification Sound</string>
     <string name="notification_vibration">Notification Vibration</string>
+    <string name="notification_settings_description">Control when and how you receive class notifications</string>
+    <string name="welcome_back">Welcome back!</string>
+
+    <!-- Profile Screen -->
+    <string name="lecturer">Lecturer</string>
+    <string name="personal_information">Personal Information</string>
+    <string name="quick_stats">Quick Stats</string>
+    <string name="classes_this_week">Classes\nThis Week</string>
+    <string name="classes_today">Classes\nToday</string>
+    <string name="next_class">Next Class</string>
+    <string name="no_upcoming_classes">No upcoming classes</string>
+    <string name="quick_actions">Quick Actions</string>
+    <string name="refresh_schedule">Refresh Schedule</string>
+    <string name="refreshing_schedule">Refreshing schedule...</string>
+    <string name="room_format">Room: %s</string>
     <string name="distance_thresholds">Distance Thresholds</string>
     <string name="distance_threshold_info">Adjust how many minutes before class you want to receive notifications based on your distance from campus</string>
     <string name="distance_0_10km">0–10 km</string>
@@ -98,6 +115,8 @@
     <string name="sunday">Sunday</string>
     <string name="no_schedule_available">No schedule available for this period</string>
     <string name="no_schedule_for_day">No schedule available for %1$s</string>
+    <string name="calendar_subtitle">View and manage your teaching schedule</string>
+    <string name="filter_by_day">Filter by Day</string>
 
     <!-- Other -->
     <string name="feature_coming_soon">This feature is coming soon</string>
