@@ -31,6 +31,12 @@
     <string name="error_invalid_credentials">Invalid username or password. Please try again.</string>
     <string name="error_user_not_found">User not found. Please register first.</string>
     <string name="error_generic">An error occurred. Please try again later.</string>
+    <string name="nidn_already_exists">This NIDN is already used by another account</string>
+    <string name="nidn_check_failed">NIDN check failed</string>
+    <string name="email_already_used">This email is already used by another account</string>
+    <string name="invalid_email_format">Invalid email format</string>
+    <string name="nidn_already_registered">NIDN already registered</string>
+
 
     <!-- Bottom Navigation -->
     <string name="title_home">Home</string>
@@ -90,13 +96,6 @@
     <string name="refresh_schedule">Refresh Schedule</string>
     <string name="refreshing_schedule">Refreshing schedule...</string>
     <string name="room_format">Room: %s</string>
-    <string name="distance_thresholds">Distance Thresholds</string>
-    <string name="distance_threshold_info">Adjust how many minutes before class you want to receive notifications based on your distance from campus</string>
-    <string name="distance_0_10km">0–10 km</string>
-    <string name="distance_10_20km">10–20 km</string>
-    <string name="distance_20_30km">20–30 km</string>
-    <string name="distance_30_40km">30–40 km</string>
-    <string name="distance_40_50km">40–50 km</string>
     <string name="minutes">minutes</string>
     <string name="save_settings">Save Settings</string>
     <string name="saving">Saving…</string>

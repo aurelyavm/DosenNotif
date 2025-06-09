@@ -97,6 +97,41 @@ class RegisterActivity : AppCompatActivity() {
         // Show progress
         binding.progressBar.visibility = View.VISIBLE
 
+        // ===== TAMBAHAN: Cek apakah NIDN sudah ada =====
+        checkNidnAvailability(nidn, name, email, password)
+    }
+
+    private fun checkNidnAvailability(nidn: String, name: String, email: String, password: String) {
+        firestore.collection("users")
+            .whereEqualTo("nidn", nidn)
+            .get()
+            .addOnSuccessListener { documents ->
+                if (!documents.isEmpty) {
+                    // NIDN sudah ada
+                    binding.progressBar.visibility = View.GONE
+                    binding.etNidn.error = getString(R.string.nidn_already_registered)
+                    binding.etNidn.requestFocus()
+                    Toast.makeText(
+                        this,
+                        getString(R.string.nidn_already_exists),
+                        Toast.LENGTH_LONG
+                    ).show()
+                } else {
+                    // NIDN tersedia, lanjutkan registrasi
+                    createUserAccount(nidn, name, email, password)
+                }
+            }
+            .addOnFailureListener { e ->
+                binding.progressBar.visibility = View.GONE
+                Toast.makeText(
+                    this,
+                    "Gagal memeriksa NIDN: ${e.message}",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+    }
+
+    private fun createUserAccount(nidn: String, name: String, email: String, password: String) {
         // Create user with email and password
         auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
@@ -128,6 +163,8 @@ class RegisterActivity : AppCompatActivity() {
                         }
                         .addOnFailureListener { e ->
                             binding.progressBar.visibility = View.GONE
+                            // Hapus akun yang sudah dibuat jika gagal simpan data
+                            auth.currentUser?.delete()
                             Toast.makeText(
                                 this,
                                 getString(R.string.error_saving_user_data, e.message),
@@ -136,10 +173,17 @@ class RegisterActivity : AppCompatActivity() {
                         }
                 } else {
                     binding.progressBar.visibility = View.GONE
+                    val errorMessage = when (task.exception?.message) {
+                        "The email address is already in use by another account." ->
+                            "Email sudah digunakan oleh akun lain"
+                        "The email address is badly formatted." ->
+                            "Format email tidak valid"
+                        else -> task.exception?.message ?: "Terjadi kesalahan"
+                    }
                     Toast.makeText(
                         this,
-                        getString(R.string.registration_failed, task.exception?.message),
-                        Toast.LENGTH_SHORT
+                        "Registrasi gagal: $errorMessage",
+                        Toast.LENGTH_LONG
                     ).show()
                 }
             }
