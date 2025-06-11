@@ -43,36 +43,26 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Initialize ViewModel
         viewModel = ViewModelProvider(this)[HomeViewModel::class.java]
 
-        // Setup RecyclerView
         setupRecyclerView()
 
-        // Set greeting based on time of day
         setGreeting()
 
-        // Setup refresh button
         binding.btnRefresh.setOnClickListener {
             refreshData()
         }
 
-        // Observe data changes
         observeViewModel()
 
-        // Start location updates
         requestLocationUpdates()
     }
 
-    /**
-     * Refresh data jadwal
-     */
     private fun refreshData() {
         binding.progressBar.visibility = View.VISIBLE
         binding.tvNoSchedule.visibility = View.GONE
         binding.btnRefresh.visibility = View.GONE
 
-        // Reload user data yang akan me-trigger load jadwal
         viewModel.loadUserData()
     }
 
@@ -98,18 +88,15 @@ class HomeFragment : Fragment() {
     }
 
     private fun observeViewModel() {
-        // Observe user data
         viewModel.userData.observe(viewLifecycleOwner) { user ->
             user?.let {
                 binding.tvName.text = it.name
             }
         }
 
-        // Observe distance from campus
         viewModel.distanceFromCampus.observe(viewLifecycleOwner) { distance ->
             binding.tvDistance.text = String.format("%.2f km", distance)
 
-            // Update notification info text
             val notificationMinutes = LocationUtils.getNotificationDelay(distance)
             binding.tvNotificationInfo.text = getString(
                 R.string.notification_will_appear,
@@ -117,7 +104,6 @@ class HomeFragment : Fragment() {
             )
         }
 
-        // Observe schedule state
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.scheduleState.collectLatest { state ->
                 when (state) {
@@ -128,7 +114,6 @@ class HomeFragment : Fragment() {
                     is Resource.Success -> {
                         binding.progressBar.visibility = View.GONE
 
-                        // Check for today's schedules
                         viewModel.todaySchedules.observe(viewLifecycleOwner) { schedules ->
                             updateScheduleList(schedules)
                         }
@@ -158,17 +143,14 @@ class HomeFragment : Fragment() {
     }
 
     private fun requestLocationUpdates() {
-        // Check location permission
         if (ActivityCompat.checkSelfPermission(
                 requireContext(),
                 Manifest.permission.ACCESS_FINE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            // Permission not granted
             return
         }
 
-        // Get last known location
         lifecycleScope.launch {
             val location = LocationUtils.getLastLocation(requireContext())
             location?.let {
@@ -176,7 +158,6 @@ class HomeFragment : Fragment() {
             }
         }
 
-        // Start location updates
         lifecycleScope.launch {
             LocationUtils.getLocationUpdates(requireContext()).collect { location ->
                 viewModel.updateCurrentLocation(location)

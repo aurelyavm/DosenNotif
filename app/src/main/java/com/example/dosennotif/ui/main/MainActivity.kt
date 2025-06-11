@@ -34,22 +34,18 @@ class MainActivity : AppCompatActivity() {
 
         auth = FirebaseAuth.getInstance()
 
-        // 1. Check login
         if (auth.currentUser == null) {
             startActivity(Intent(this, LoginActivity::class.java))
             finish()
             return
         }
 
-        // 2. Setup bottom navigation
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         val navController = navHostFragment.navController
         binding.bottomNavigation.setupWithNavController(navController)
 
-        // 3. Create notification channel
         NotificationUtils.createNotificationChannel(this)
 
-        // 4. Request permissions
         requestRequiredPermissions()
     }
 
@@ -77,7 +73,6 @@ class MainActivity : AppCompatActivity() {
                 LOCATION_PERMISSION_REQUEST_CODE
             )
         } else {
-            // Semua permission sudah OK, jalankan service
             startRealtimeScheduleService()
         }
     }

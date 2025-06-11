@@ -23,11 +23,9 @@ class RegisterActivity : AppCompatActivity() {
         binding = ActivityRegisterBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Initialize Firebase
         auth = FirebaseAuth.getInstance()
         firestore = FirebaseFirestore.getInstance()
 
-        // Set up click listeners
         binding.btnRegister.setOnClickListener {
             registerUser()
         }
@@ -45,7 +43,6 @@ class RegisterActivity : AppCompatActivity() {
         val password = binding.etPassword.text.toString().trim()
         val confirmPassword = binding.etConfirmPassword.text.toString().trim()
 
-        // Validate input fields
         if (name.isEmpty()) {
             binding.etName.error = getString(R.string.field_required)
             binding.etName.requestFocus()
@@ -94,10 +91,8 @@ class RegisterActivity : AppCompatActivity() {
             return
         }
 
-        // Show progress
         binding.progressBar.visibility = View.VISIBLE
 
-        // ===== TAMBAHAN: Cek apakah NIDN sudah ada =====
         checkNidnAvailability(nidn, name, email, password)
     }
 
@@ -107,7 +102,6 @@ class RegisterActivity : AppCompatActivity() {
             .get()
             .addOnSuccessListener { documents ->
                 if (!documents.isEmpty) {
-                    // NIDN sudah ada
                     binding.progressBar.visibility = View.GONE
                     binding.etNidn.error = getString(R.string.nidn_already_registered)
                     binding.etNidn.requestFocus()
@@ -117,7 +111,6 @@ class RegisterActivity : AppCompatActivity() {
                         Toast.LENGTH_LONG
                     ).show()
                 } else {
-                    // NIDN tersedia, lanjutkan registrasi
                     createUserAccount(nidn, name, email, password)
                 }
             }
@@ -132,11 +125,9 @@ class RegisterActivity : AppCompatActivity() {
     }
 
     private fun createUserAccount(nidn: String, name: String, email: String, password: String) {
-        // Create user with email and password
         auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    // Save additional user data to Firestore
                     val userId = auth.currentUser?.uid ?: return@addOnCompleteListener
                     val user = User(
                         id = userId,
@@ -157,13 +148,11 @@ class RegisterActivity : AppCompatActivity() {
                                 Toast.LENGTH_SHORT
                             ).show()
 
-                            // Redirect to login
                             startActivity(Intent(this, LoginActivity::class.java))
                             finish()
                         }
                         .addOnFailureListener { e ->
                             binding.progressBar.visibility = View.GONE
-                            // Hapus akun yang sudah dibuat jika gagal simpan data
                             auth.currentUser?.delete()
                             Toast.makeText(
                                 this,

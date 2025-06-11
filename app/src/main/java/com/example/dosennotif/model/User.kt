@@ -6,5 +6,4 @@ data class User(
     val email: String = "",
     val nidn: String = "",
     val createdAt: Long = 0,
-    val notificationPreferences: NotificationPreferences = NotificationPreferences()
 )

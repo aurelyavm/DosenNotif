@@ -21,16 +21,14 @@ object ApiClient {
     private const val USERNAME = "uakademik"
     private const val PASSWORD = "VTUzcjRrNGRlbTFrMjAyNCYh"
 
-    // Encode credentials to Base64 for Basic Authentication
     private fun getAuthorizationHeader(): String {
         val credentials = "$USERNAME:$PASSWORD"
         return "Basic " + Base64.encodeToString(credentials.toByteArray(), Base64.NO_WRAP)
     }
 
-    // Create API service
     fun create(): ApiService {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY // Log BODY for request and response
+            level = HttpLoggingInterceptor.Level.BODY
         }
 
         val client = OkHttpClient.Builder()

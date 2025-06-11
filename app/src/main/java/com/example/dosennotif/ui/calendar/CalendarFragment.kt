@@ -41,32 +41,24 @@ class CalendarFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Initialize ViewModel
         viewModel = ViewModelProvider(this)[CalendarViewModel::class.java]
 
-        // Setup UI
         setupPeriodSpinner()
         setupDayFilter()
         setupRecyclerView()
 
-        // Setup refresh button
         binding.btnRefresh.setOnClickListener {
             refreshData()
         }
 
-        // Observe data changes
         observeViewModel()
     }
 
-    /**
-     * Refresh data jadwal
-     */
     private fun refreshData() {
         binding.progressBar.visibility = View.VISIBLE
         binding.tvNoSchedule.visibility = View.GONE
         binding.btnRefresh.visibility = View.GONE
 
-        // Reload user data yang akan me-trigger load jadwal
         viewModel.loadUserData()
     }
 
@@ -105,7 +97,6 @@ class CalendarFragment : Fragment() {
                 else -> null
             }
 
-            // Apply filter
             filterSchedules()
         }
     }
@@ -122,7 +113,6 @@ class CalendarFragment : Fragment() {
         val schedulesByDay = viewModel.schedulesByDay.value ?: return
 
         if (selectedDay == null) {
-            // Show all days
             scheduleAdapter.updateSchedules(schedulesByDay)
 
             if (schedulesByDay.isEmpty()) {
@@ -136,7 +126,6 @@ class CalendarFragment : Fragment() {
                 binding.btnRefresh.visibility = View.GONE
             }
         } else {
-            // Filter by selected day
             val filteredSchedules = schedulesByDay.filter { it.key == selectedDay }
 
             if (filteredSchedules.isEmpty()) {
@@ -154,16 +143,13 @@ class CalendarFragment : Fragment() {
     }
 
     private fun observeViewModel() {
-        // Observe period changes
         viewModel.selectedPeriod.observe(viewLifecycleOwner) { period ->
-            // Find and select the correct spinner position
             val position = viewModel.availablePeriods.indexOfFirst { it.first == period }
             if (position >= 0 && binding.spinnerPeriod.selectedItemPosition != position) {
                 binding.spinnerPeriod.setSelection(position)
             }
         }
 
-        // Observe schedules by day
         viewModel.schedulesByDay.observe(viewLifecycleOwner) { schedulesByDay ->
             if (schedulesByDay.isEmpty()) {
                 binding.tvNoSchedule.visibility = View.VISIBLE
@@ -175,7 +161,6 @@ class CalendarFragment : Fragment() {
             }
         }
 
-        // Observe schedule state
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.scheduleState.collectLatest { state ->
                 when (state) {

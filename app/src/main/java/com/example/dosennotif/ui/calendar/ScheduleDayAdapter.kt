@@ -11,7 +11,6 @@ class ScheduleDayAdapter(
     private var schedulesByDay: Map<String, List<Schedule>> = emptyMap()
 ) : RecyclerView.Adapter<ScheduleDayAdapter.DayViewHolder>() {
 
-    // Get sorted days from the map
     private val sortedDays: List<String>
         get() = schedulesByDay.keys.toList()
 
@@ -43,7 +42,6 @@ class ScheduleDayAdapter(
         fun bind(day: String, schedules: List<Schedule>) {
             binding.tvDayHeader.text = day
 
-            // Setup nested RecyclerView for this day's schedules
             val scheduleItemAdapter = ScheduleItemAdapter(schedules)
             binding.rvDaySchedules.apply {
                 layoutManager = LinearLayoutManager(binding.root.context)

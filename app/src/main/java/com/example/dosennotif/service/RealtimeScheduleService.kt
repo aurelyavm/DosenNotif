@@ -30,10 +30,8 @@ class RealtimeScheduleService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        // Buat notification channel untuk alarm notifications
         NotificationUtils.createNotificationChannel(applicationContext)
 
-        // Buat notification channel untuk foreground service
         createForegroundNotificationChannel()
 
         startForeground(
@@ -74,7 +72,6 @@ class RealtimeScheduleService : Service() {
                             scheduleResult.data.forEach { schedule ->
                                 Log.d("data schedule","schedule ${schedule}");
 
-                                // Schedule notification via NotificationUtils
                                 NotificationUtils.scheduleNotification(
                                     applicationContext,
                                     schedule,
@@ -91,7 +88,6 @@ class RealtimeScheduleService : Service() {
         }
     }
 
-    // Fungsi untuk mendapatkan jam saat ini + X menit dalam format HH:mm:ss
     fun getTimeXMinutesFromNow(minutes: Int): String {
         val cal = Calendar.getInstance()
         cal.add(Calendar.MINUTE, minutes)
@@ -99,7 +95,6 @@ class RealtimeScheduleService : Service() {
         return format.format(cal.time)
     }
 
-    // Fungsi untuk mendapatkan nama hari sesuai format di Schedule
     fun getTodayName(): String {
         val format = SimpleDateFormat("EEEE", Locale("id", "ID"))
         return format.format(Calendar.getInstance().time)
@@ -149,6 +144,6 @@ class RealtimeScheduleService : Service() {
     companion object {
         private const val FOREGROUND_CHANNEL_ID = "realtime_schedule_service_channel"
         private const val NOTIF_ID = 1
-        private const val CHECK_INTERVAL_MS = 10_000L // cek tiap 10 detik
+        private const val CHECK_INTERVAL_MS = 10_000L
     }
 }

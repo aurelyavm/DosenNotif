@@ -33,7 +33,6 @@ class ScheduleItemAdapter(
                 tvScheduleTime.text = schedule.getTimeRange()
                 tvCourseName.text = schedule.nama_mata_kuliah
 
-                // Format details
                 val details = "Kelas ${schedule.kelas} • ${schedule.ruang} • ${schedule.nama_program_studi}"
                 tvCourseDetails.text = details
             }

@@ -23,7 +23,6 @@ data class Schedule(
     val ruang: String
 ) : Serializable {
 
-    // Helper methods to process schedule data
     fun getFormattedDay(): String {
         return hari.trim()
     }
@@ -85,7 +84,6 @@ data class Schedule(
         }
     }
 
-    // Used to handle the duplicated schedules issue
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false

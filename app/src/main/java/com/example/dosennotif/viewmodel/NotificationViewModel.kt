@@ -14,7 +14,6 @@ class NotificationViewModel : ViewModel() {
     private val repository = ScheduleRepository()
     private val auth = FirebaseAuth.getInstance()
 
-    // StateFlow for notifications
     private val _notificationsState = MutableStateFlow<Resource<List<ScheduleNotification>>>(Resource.Loading)
     val notificationsState = _notificationsState.asStateFlow()
 
@@ -46,12 +45,10 @@ class NotificationViewModel : ViewModel() {
         viewModelScope.launch {
             repository.markNotificationAsRead(currentUser.uid, notificationId)
 
-            // Update the notifications state to reflect the change
             loadNotifications()
         }
     }
 
-    // Get unread notification count
     fun getUnreadCount(): Int {
         val currentState = _notificationsState.value
 

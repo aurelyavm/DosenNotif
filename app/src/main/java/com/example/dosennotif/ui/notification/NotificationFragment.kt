@@ -36,19 +36,15 @@ class NotificationFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Initialize ViewModel
         viewModel = ViewModelProvider(this)[NotificationViewModel::class.java]
 
-        // Setup RecyclerView
         setupRecyclerView()
 
-        // Observe notifications
         observeNotifications()
     }
 
     private fun setupRecyclerView() {
         notificationAdapter = NotificationAdapter(emptyList()) { notification ->
-            // Hanya mark as read, tanpa buka detail
             viewModel.markNotificationAsRead(notification.id)
         }
 
@@ -93,7 +89,6 @@ class NotificationFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        // Refresh notifications when returning to this fragment
         viewModel.loadNotifications()
     }
 

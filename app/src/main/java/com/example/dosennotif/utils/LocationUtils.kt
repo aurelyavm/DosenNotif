@@ -18,39 +18,10 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 
 object LocationUtils {
-    // UPNVJ Campus Location
 
     private const val UPNVJ_LATITUDE = -6.315588522917615 //-6.3159007105195535, 106.79496049535477
     private const val UPNVJ_LONGITUDE = 106.83980697680275 //-6.315868725694896, 106.79500341534542
 
-    //jarak 10+ km:
-    /*
-    private const val UPNVJ_LATITUDE = -8.70650172328101
-    private const val UPNVJ_LONGITUDE = 115.17777198369669
-    */
-    //jarak 20+ km:
-    /*
-    private const val UPNVJ_LATITUDE = -8.606946753381965
-    private const val UPNVJ_LONGITUDE = 115.1950018243033
-     */
-    //jarak 30+ km:
-    /*
-    private const val UPNVJ_LATITUDE = -8.528143391134693
-    private const val UPNVJ_LONGITUDE = 115.20082408555326
-     */
-    //jarak 40+ km:
-    /*
-    private const val UPNVJ_LATITUDE = -8.448345800051587
-    private const val UPNVJ_LONGITUDE = 115.1672666046926
-     */
-    //jarak 50+ km:
-    //private const val UPNVJ_LATITUDE = -8.331872716883032
-    //private const val UPNVJ_LONGITUDE = 115.1842662169762
-    //jarak 30+ km (versi udah di rumah):
-    //private const val UPNVJ_LATITUDE = -6.221082361732866
-    //private const val UPNVJ_LONGITUDE = 106.56228184232832
-
-    // Calculate distance between two locations in kilometers
     fun calculateDistance(
         startLatitude: Double,
         startLongitude: Double,
@@ -65,11 +36,9 @@ object LocationUtils {
             endLongitude,
             results
         )
-        // Convert meters to kilometers
         return results[0] / 1000
     }
 
-    // Calculate distance from campus
     fun calculateDistanceFromCampus(latitude: Double, longitude: Double): Float {
         return calculateDistance(
             latitude,
@@ -79,28 +48,24 @@ object LocationUtils {
         )
     }
 
-    // Get notification delay based on distance (in minutes)
     fun getNotificationDelay(distanceInKm: Float): Int {
         return when {
-            distanceInKm < 10 -> 30     // 0-10 km -> 30 minutes
-            distanceInKm < 20 -> 60     // 10-20 km -> 60 minutes
-            distanceInKm < 30 -> 90     // 20-30 km -> 90 minutes
-            distanceInKm < 40 -> 120    // 30-40 km -> 120 minutes
-            else -> 150                // 40+ km -> 150 minutes
+            distanceInKm < 10 -> 30
+            distanceInKm < 20 -> 60
+            distanceInKm < 30 -> 90
+            distanceInKm < 40 -> 120
+            else -> 150
         }
     }
 
-    // Get location updates as Flow
     fun getLocationUpdates(context: Context, intervalMs: Long = 60000): Flow<Location> {
         val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
 
-        // Create location request
         val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, intervalMs)
             .setMinUpdateDistanceMeters(100f)
             .build()
 
         return callbackFlow {
-            // Check if permission is granted
             if (ActivityCompat.checkSelfPermission(
                     context,
                     Manifest.permission.ACCESS_FINE_LOCATION
@@ -110,7 +75,6 @@ object LocationUtils {
                 return@callbackFlow
             }
 
-            // Location callback
             val locationCallback = object : LocationCallback() {
                 override fun onLocationResult(result: LocationResult) {
                     result.lastLocation?.let { location ->
@@ -119,25 +83,21 @@ object LocationUtils {
                 }
             }
 
-            // Request location updates
             fusedLocationClient.requestLocationUpdates(
                 locationRequest,
                 locationCallback,
                 Looper.getMainLooper()
             )
 
-            // Clean up
             awaitClose {
                 fusedLocationClient.removeLocationUpdates(locationCallback)
             }
         }
     }
 
-    // Get last known location
     suspend fun getLastLocation(context: Context): Location? {
         val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
 
-        // Check if permission is granted
         if (ActivityCompat.checkSelfPermission(
                 context,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -153,15 +113,3 @@ object LocationUtils {
         }
     }
 }
-
-// Extension to convert Task to suspend function
-/*
-suspend fun <T> com.google.android.gms.tasks.Task<T>.await(): T? {
-    return try {
-        kotlinx.coroutines.tasks.await()
-    } catch (e: Exception) {
-        null
-    }
-}
-
- */

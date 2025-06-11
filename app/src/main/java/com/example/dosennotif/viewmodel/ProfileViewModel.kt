@@ -19,15 +19,12 @@ class ProfileViewModel : ViewModel() {
     private val auth = FirebaseAuth.getInstance()
     private val repository = ScheduleRepository()
 
-    // LiveData for user data
     private val _userData = MutableLiveData<User?>()
     val userData: LiveData<User?> = _userData
 
-    // LiveData for user schedules
     private val _userSchedules = MutableLiveData<List<Schedule>>()
     val userSchedules: LiveData<List<Schedule>> = _userSchedules
 
-    // LiveData for next class
     private val _nextClass = MutableLiveData<Schedule?>()
     val nextClass: LiveData<Schedule?> = _nextClass
 
@@ -49,11 +46,9 @@ class ProfileViewModel : ViewModel() {
                     val user = document.toObject(User::class.java)
                     _userData.value = user
 
-                    // Load schedules after getting user data
                     user?.nidn?.let { loadSchedules(it) }
                 }
             } catch (e: Exception) {
-                // Handle error
             }
         }
     }
@@ -79,7 +74,6 @@ class ProfileViewModel : ViewModel() {
         val currentDayOfWeek = now.get(Calendar.DAY_OF_WEEK)
         val currentTime = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE)
 
-        // Find the next upcoming class
         var nextClass: Schedule? = null
         var minTimeDiff = Int.MAX_VALUE
 
@@ -88,17 +82,14 @@ class ProfileViewModel : ViewModel() {
             val (hour, minute) = schedule.jam_mulai.split(":").map { it.toInt() }
             val scheduleTimeMinutes = hour * 60 + minute
 
-            // Calculate days until this class
             val daysUntil = when {
                 scheduleDayOfWeek > currentDayOfWeek -> scheduleDayOfWeek - currentDayOfWeek
                 scheduleDayOfWeek < currentDayOfWeek -> (7 - currentDayOfWeek) + scheduleDayOfWeek
                 else -> {
-                    // Same day
                     if (scheduleTimeMinutes > currentTime) 0 else 7
                 }
             }
 
-            // Calculate total minutes until this class
             val totalMinutesUntil = if (daysUntil == 0) {
                 scheduleTimeMinutes - currentTime
             } else {

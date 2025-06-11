@@ -68,11 +68,9 @@ class ScheduleRepository {
         }
     }
 
-    // Di fungsi saveNotification(), tambahkan check duplikat:
     suspend fun saveNotification(userId: String, notification: ScheduleNotification): Resource<String> {
         return withContext(Dispatchers.IO) {
             try {
-                // Check if notification already exists
                 val existingNotification = firestore.collection("users")
                     .document(userId)
                     .collection("notifications")

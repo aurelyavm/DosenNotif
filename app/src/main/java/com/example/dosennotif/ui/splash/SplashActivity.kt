@@ -18,21 +18,17 @@ class SplashActivity : AppCompatActivity() {
     private lateinit var binding: ActivitySplashBinding
     private lateinit var auth: FirebaseAuth
 
-    // Splash screen display duration
     private val SPLASH_DISPLAY_LENGTH: Long = 2000 // 2 seconds
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Apply new SplashScreen API for Android 12+
         val splashScreen = installSplashScreen()
 
         super.onCreate(savedInstanceState)
         binding = ActivitySplashBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Initialize Firebase Auth
         auth = FirebaseAuth.getInstance()
 
-        // Set version info dynamically
         try {
             val packageInfo = packageManager.getPackageInfo(packageName, 0)
             val versionName = packageInfo.versionName
@@ -47,21 +43,16 @@ class SplashActivity : AppCompatActivity() {
             binding.tvVersion.text = "Version 1.0.0"
         }
 
-        // Keep the splash screen visible for Android 12+ devices
-        // until we're done loading
         splashScreen.setKeepOnScreenCondition { false }
 
-        // Setup animation
         setupAnimation()
 
-        // Handle navigation after delay
         Handler(Looper.getMainLooper()).postDelayed({
             navigateToNextScreen()
         }, SPLASH_DISPLAY_LENGTH)
     }
 
     private fun setupAnimation() {
-        // Fade-in animation for logo and text
         val fadeIn = AlphaAnimation(0.0f, 1.0f)
         fadeIn.duration = 1000
 
@@ -69,14 +60,12 @@ class SplashActivity : AppCompatActivity() {
         binding.tvAppName.startAnimation(fadeIn)
         binding.tvTagline.startAnimation(fadeIn)
 
-        // Delayed fade-in for progress bar
         val fadeInDelayed = AlphaAnimation(0.0f, 1.0f)
         fadeInDelayed.duration = 500
         fadeInDelayed.startOffset = 1000
 
         binding.progressBar.startAnimation(fadeInDelayed)
 
-        // Animation listener to display version info after animations
         fadeIn.setAnimationListener(object : Animation.AnimationListener {
             override fun onAnimationStart(animation: Animation?) {}
 
@@ -90,21 +79,16 @@ class SplashActivity : AppCompatActivity() {
     }
 
     private fun navigateToNextScreen() {
-        // Check if user is already logged in
         val currentUser = auth.currentUser
 
         if (currentUser != null) {
-            // User is logged in, go to MainActivity
             startActivity(Intent(this, MainActivity::class.java))
         } else {
-            // User is not logged in, go to LoginActivity
             startActivity(Intent(this, LoginActivity::class.java))
         }
 
-        // Apply slide transition
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
 
-        // Close this activity
         finish()
     }
 }

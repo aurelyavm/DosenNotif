@@ -56,8 +56,6 @@
 
         <!-- Broadcast receivers for notifications -->
         <receiver android:name=".utils.AlarmReceiver" android:exported="true"/>
-        <receiver android:name=".utils.SnoozeReceiver" />
-        <receiver android:name=".utils.DismissReceiver" />
 
         <!-- Boot receiver to reschedule notifications after device restart -->
         <receiver

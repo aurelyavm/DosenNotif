@@ -28,27 +28,21 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val firestore = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
 
-    // LiveData for distance from campus
     private val _distanceFromCampus = MutableLiveData<Float>()
     val distanceFromCampus: LiveData<Float> = _distanceFromCampus
 
-    // LiveData for current location
     private val _currentLocation = MutableLiveData<Location?>()
     val currentLocation: LiveData<Location?> = _currentLocation
 
-    // LiveData for user data
     private val _userData = MutableLiveData<User?>()
     val userData: LiveData<User?> = _userData
 
-    // StateFlow for schedule data
     private val _scheduleState = MutableStateFlow<Resource<List<Schedule>>>(Resource.Loading)
     val scheduleState = _scheduleState.asStateFlow()
 
-    // LiveData for today's schedules
     private val _todaySchedules = MutableLiveData<List<Schedule>>()
     val todaySchedules: LiveData<List<Schedule>> = _todaySchedules
 
-    // Current day of week
     private val currentDayOfWeek = Calendar.getInstance().get(Calendar.DAY_OF_WEEK)
 
     init {
@@ -67,7 +61,6 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                         val user = document.toObject(User::class.java)
                         _userData.value = user
 
-                        // Load schedules after getting user data
                         user?.nidn?.let { loadSchedules(it) }
                     }
                 }
@@ -82,10 +75,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 is Resource.Success -> {
                     _scheduleState.value = result
 
-                    // Filter today's schedules
                     filterTodaySchedules(result.data)
 
-                    // Schedule notifications for upcoming classes
                     scheduleNotifications(result.data)
                 }
                 is Resource.Error -> {
@@ -109,7 +100,6 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
         val todayDayName = dayMapping[currentDayOfWeek]?.lowercase(Locale.getDefault())
 
-        // pengecekan null
         if (schedules.isNullOrEmpty()) {
             _todaySchedules.postValue(emptyList())
             return
@@ -125,7 +115,6 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun scheduleNotifications(schedules: List<Schedule>) {
         viewModelScope.launch {
-            // Get current location and calculate distance
             _currentLocation.value?.let { location ->
                 val distance = LocationUtils.calculateDistanceFromCampus(
                     location.latitude,
@@ -134,10 +123,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
                 _distanceFromCampus.postValue(distance)
 
-                // Get notification delay based on distance
                 val delayMinutes = LocationUtils.getNotificationDelay(distance)
 
-                // Schedule notifications for all classes
                 schedules.forEach { schedule ->
                     NotificationUtils.scheduleNotification(
                         getApplication(),
@@ -152,7 +139,6 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     fun updateCurrentLocation(location: Location) {
         _currentLocation.value = location
 
-        // Calculate distance from campus
         val distance = LocationUtils.calculateDistanceFromCampus(
             location.latitude,
             location.longitude
@@ -160,7 +146,6 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
         _distanceFromCampus.postValue(distance)
 
-        // Reschedule notifications with updated distance
         _scheduleState.value.let { state ->
             if (state is Resource.Success) {
                 scheduleNotifications(state.data)
@@ -168,7 +153,6 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // Get formatted text for distance
     fun getFormattedDistance(): String {
         val distance = _distanceFromCampus.value ?: 0f
         return String.format("%.2f km", distance)
