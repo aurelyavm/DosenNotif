@@ -17,7 +17,7 @@
 ### - Networking: Retrofit2 dengan OkHttp3
 ## Instalasi
 ### - Clone repository ini
-bashgit clone https://github.com/aurelyavm/DosenNotif.git
+git clone https://github.com/aurelyavm/DosenNotif.git
 ### - Buka project di Android Studio
 ### - Tambahkan file google-services.json dari Firebase Console ke folder app/
 ### - Sinkronisasi project dengan Gradle files
