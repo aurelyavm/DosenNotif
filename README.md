@@ -1,20 +1,20 @@
 # DosenDer (Dosen Reminder)
 DosenDer adalah aplikasi Android yang dirancang sebagai proyek skripsi untuk memberikan notifikasi jadwal mengajar kepada dosen berdasarkan lokasi mereka dari kampus. Aplikasi ini dibangun menggunakan bahasa pemrograman Kotlin dan memanfaatkan teknologi Fused Location Provider API untuk menentukan waktu notifikasi yang optimal berdasarkan jarak dosen dari Fakultas Ilmu Komputer UPN Veteran Jakarta.
 ## Fitur Utama
-Notifikasi Berbasis Lokasi: Mengirimkan notifikasi jadwal mengajar dengan waktu yang disesuaikan berdasarkan jarak dosen dari kampus
-Integrasi API Jadwal: Mengambil data jadwal mengajar secara otomatis dari API kampus
-Manajemen Jadwal: Menampilkan jadwal mengajar harian dan keseluruhan per semester
-Histori Notifikasi: Menyimpan riwayat notifikasi yang telah dikirimkan
-Profil Pengguna: Menampilkan informasi dosen dan statistik jadwal mengajar
+Notifikasi Berbasis Lokasi: Mengirimkan notifikasi jadwal mengajar dengan waktu yang disesuaikan berdasarkan jarak dosen dari kampus.  
+Integrasi API Jadwal: Mengambil data jadwal mengajar secara otomatis dari API kampus.  
+Tampilan Jadwal: Menampilkan jadwal mengajar harian dan keseluruhan per semester.  
+Histori Notifikasi: Menyimpan riwayat notifikasi yang telah dikirimkan.  
+Profil Pengguna: Menampilkan informasi dosen dan statistik jadwal mengajar.  
 ## Teknologi yang Digunakan
-Platform: Android (Min SDK 24 / Android 7.0 Nougat)
-Bahasa Pemrograman: Kotlin
-Database: Firebase Firestore
-Autentikasi: Firebase Authentication
-Location Service: Fused Location Provider API
-Architecture: MVVM (Model-View-ViewModel)
-UI Components: Material Design Components
-Networking: Retrofit2 dengan OkHttp3
+Platform: Android (Min SDK 24 / Android 7.0 Nougat)  
+Bahasa Pemrograman: Kotlin  
+Database: Firebase Firestore  
+Autentikasi: Firebase Authentication  
+Location Service: Fused Location Provider API  
+Architecture: MVVM (Model-View-ViewModel)  
+UI Components: Material Design Components  
+Networking: Retrofit2 dengan OkHttp3  
 ## Instalasi
 1. Clone repository ini:
 git clone https://github.com/aurelyavm/DosenNotif.git
@@ -35,7 +35,7 @@ git clone https://github.com/aurelyavm/DosenNotif.git
    30-40 km: 120 menit sebelum jadwal
    40-50 km: 150 menit sebelum jadwal
 ## Author
-Aurelya Vazila Mirajani
-Program Studi S1 Informatika
-Fakultas Ilmu Komputer
-Universitas Pembangunan Nasional Veteran Jakarta
+Aurelya Vazila Mirajani  
+Program Studi S1 Informatika  
+Fakultas Ilmu Komputer  
+Universitas Pembangunan Nasional Veteran Jakarta  
