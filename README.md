@@ -23,7 +23,7 @@ DosenDer adalah aplikasi Android yang dirancang sebagai proyek skripsi untuk mem
 4. Sinkronisasi project dengan Gradle files
 5. Jalankan aplikasi pada emulator atau perangkat Android yang terhubung
 ## Cara Penggunaan
-1. Download app pada link berikut: s.id/DosenderApp
+1. Download app pada link berikut: https://s.id/DosenderApp
 2. Buka aplikasi, lalu lakukan login dengan memasukkan email dan password
 3. Jika belum memiliki akun, lakukan registrasi dengan klik "Don't have an account? Register"
 4. Saat pertama kali login, izinkan aplikasi untuk mengakses lokasi dan notifikasi pada perangkat
