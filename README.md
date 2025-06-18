@@ -29,11 +29,11 @@ DosenDer adalah aplikasi Android yang dirancang sebagai proyek skripsi untuk mem
 4. Saat pertama kali login, izinkan aplikasi untuk mengakses lokasi dan notifikasi pada perangkat
 5. Lihat jadwal hari ini pada halaman home, dan jadwal keseluruhan pada halaman kalender.
 6. Notifikasi akan muncul otomatis berdasarkan jarak pengguna dari kampus:
-   0-10 km: 30 menit sebelum jadwal
-   10-20 km: 60 menit sebelum jadwal
-   20-30 km: 90 menit sebelum jadwal
-   30-40 km: 120 menit sebelum jadwal
-   40-50 km: 150 menit sebelum jadwal
+   0-10 km: 30 menit sebelum jadwal  
+   10-20 km: 60 menit sebelum jadwal  
+   20-30 km: 90 menit sebelum jadwal  
+   30-40 km: 120 menit sebelum jadwal  
+   40-50 km: 150 menit sebelum jadwal  
 ## Author
 Aurelya Vazila Mirajani  
 Program Studi S1 Informatika  
