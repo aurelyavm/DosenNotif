@@ -12,7 +12,7 @@ object ApiClient {
     private const val BASE_URL = "https://api.upnvj.ac.id/"
 
     private val CUSTOM_HEADERS = mapOf(
-        "API_KEY_NAME" to "X-UPNVJ-API-KEY", // <-- ini nama key, bukan header itu sendiri
+        "API_KEY_NAME" to "X-UPNVJ-API-KEY",
         "API_KEY_SECRET" to "Cspwwxq5SyTOMkq8XYcwZ1PMpYrYCwrv",
         "Accept" to "application/json",
         "Content-Type" to "multipart/form-data"
