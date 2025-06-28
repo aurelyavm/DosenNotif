@@ -19,8 +19,8 @@ import kotlinx.coroutines.tasks.await
 
 object LocationUtils {
 
-    private const val UPNVJ_LATITUDE = -6.316126 //-6.315588522917615 //-6.3159007105195535, 106.79496049535477
-    private const val UPNVJ_LONGITUDE = 106.795078 //106.83980697680275 //-6.315868725694896, 106.79500341534542
+    private const val UPNVJ_LATITUDE = -6.316126
+    private const val UPNVJ_LONGITUDE = 106.795078
 
     fun calculateDistance(
         startLatitude: Double,
