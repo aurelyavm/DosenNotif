@@ -120,4 +120,5 @@
     <!-- Other -->
     <string name="feature_coming_soon">This feature is coming soon</string>
     <string name="notification_will_appear">Notifications will appear %1$d minutes before class</string>
+    <string name="checking_data_source">Checking data source...</string>
 </resources>

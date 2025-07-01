@@ -1,0 +1,60 @@
+@startuml
+' ViewModel
+package "ViewModel" #F9E4D5 {
+  class HomeViewModel {
+    - repository: ScheduleRepository
+    - firestore: FirebaseFirestore
+    - auth: FirebaseAuth
+    + distanceFromCampus: LiveData<Float>
+    + currentLocation: LiveData<Location>
+    + userData: LiveData<User>
+    + scheduleState: StateFlow<Resource<List<Schedule>>>
+    + todaySchedules: LiveData<List<Schedule>>
+    + loadUserData()
+    + loadSchedules(nidn: String, period: String)
+    + updateCurrentLocation(location: Location)
+    - filterTodaySchedules(schedules: List<Schedule>)
+    - scheduleNotifications(schedules: List<Schedule>)
+  }
+
+  class CalendarViewModel {
+    - repository: ScheduleRepository
+    - firestore: FirebaseFirestore
+    - auth: FirebaseAuth
+    + availablePeriods: List<Pair<String, String>>
+    + selectedPeriod: LiveData<String>
+    + scheduleState: StateFlow<Resource<List<Schedule>>>
+    + schedulesByDay: LiveData<Map<String, List<Schedule>>>
+    + loadUserData()
+    + loadSchedules(nidn: String, period: String)
+    + selectPeriod(period: String)
+    - groupSchedulesByDay(schedules: List<Schedule>)
+    + getSchedulesForDay(day: String): List<Schedule>
+    + getAllSchedules(): List<Schedule>
+  }
+
+  class NotificationViewModel {
+    - repository: ScheduleRepository
+    - auth: FirebaseAuth
+    + notificationsState: StateFlow<Resource<List<ScheduleNotification>>>
+    + loadNotifications()
+    + markNotificationAsRead(notificationId: String)
+    + getUnreadCount(): Int
+  }
+
+  class ProfileViewModel {
+    - firestore: FirebaseFirestore
+    - auth: FirebaseAuth
+    - repository: ScheduleRepository
+    + userData: LiveData<User>
+    + userSchedules: LiveData<List<Schedule>>
+    + nextClass: LiveData<Schedule>
+    + loadUserData()
+    - loadSchedules(nidn: String, period: String)
+    - findNextClass(schedules: List<Schedule>)
+    + refreshSchedule()
+    + signOut()
+  }
+}
+
+@enduml

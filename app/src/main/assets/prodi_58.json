@@ -1,0 +1,18 @@
+[
+  {
+    "id_dosen": "dosen_ni",
+    "nama_dosen": "Nindy Irzavika",
+    "nidn_dosen": "0017069210",
+    "id_periode": "20242",
+    "id_program_studi": "58",
+    "nama_program_studi": "S1 Sains Data",
+    "kode_mata_kuliah": "PRAKSISO",
+    "nama_mata_kuliah": "Praktikum Sistem Operasi",
+    "sks": "3",
+    "kelas": "A",
+    "hari": "Senin",
+    "jam_mulai": "09:40:00",
+    "jam_selesai": "11:20:00",
+    "ruang": "FIKLAB-302"
+  }
+]

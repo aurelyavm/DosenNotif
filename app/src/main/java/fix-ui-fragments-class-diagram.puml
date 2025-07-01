@@ -1,0 +1,44 @@
+@startuml
+package "UI.Fragments" #FFF9D5 {
+  class HomeFragment {
+    - viewModel: HomeViewModel
+    - scheduleAdapter: ScheduleAdapter
+    + onCreateView(): View
+    - refreshData()
+    - setupRecyclerView()
+    - setGreeting()
+    - observeViewModel()
+    - requestLocationUpdates()
+  }
+
+  class CalendarFragment {
+    - viewModel: CalendarViewModel
+    - scheduleAdapter: ScheduleDayAdapter
+    - selectedDay: String
+    + onCreateView(): View
+    - refreshData()
+    - setupPeriodSpinner()
+    - setupDayFilter()
+    - filterSchedules()
+    - observeViewModel()
+  }
+
+  class NotificationFragment {
+    - viewModel: NotificationViewModel
+    - notificationAdapter: NotificationAdapter
+    + onCreateView(): View
+    - setupRecyclerView()
+    - observeNotifications()
+  }
+
+  class ProfileFragment {
+    - viewModel: ProfileViewModel
+    + onCreateView(): View
+    - setupListeners()
+    - observeUserData()
+    - updateScheduleStats()
+    - updateNextClassInfo()
+  }
+}
+
+@enduml

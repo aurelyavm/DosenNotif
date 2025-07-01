@@ -1,0 +1,58 @@
+@startuml
+package "Model" #DEEBD8 {
+  class User {
+    + id: String
+    + name: String
+    + email: String
+    + nidn: String
+    + createdAt: Long
+  }
+
+  class Schedule {
+    + id_dosen: String
+    + nama_dosen: String
+    + nidn_dosen: String
+    + id_periode: String
+    + id_program_studi: String
+    + nama_program_studi: String
+    + kode_mata_kuliah: String
+    + nama_mata_kuliah: String
+    + sks: String
+    + kelas: String
+    + hari: String
+    + jam_mulai: String
+    + jam_selesai: String
+    + ruang: String
+    + getFormattedDay(): String
+    + getStartTime(): Date?
+    + getEndTime(): Date?
+    + getFormattedStartTime(): String
+    + getFormattedEndTime(): String
+    + getTimeRange(): String
+    + getDayOfWeekNumber(): Int
+    + equals(): Boolean
+    + hashCode(): Int
+  }
+
+  class ScheduleNotification {
+    + id: String
+    + scheduleId: String
+    + title: String
+    + message: String
+    + scheduledTime: Long
+    + actualScheduleTime: Long
+    + room: String
+    + courseName: String
+    + className: String
+    + isRead: Boolean
+    + createdAt: Long
+  }
+
+  class ScheduleResponse {
+    + status: String
+    + message: String
+    + data: List<Schedule>
+  }
+}
+
+@enduml

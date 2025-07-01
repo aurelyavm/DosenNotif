@@ -1,0 +1,33 @@
+@startuml
+' UI Adapters
+package "UI.Adapters" #FFF9D5 {
+  class ScheduleAdapter {
+    - schedules: List<Schedule>
+    + onCreateViewHolder(): ScheduleViewHolder
+    + onBindViewHolder()
+    + updateSchedules(newSchedules: List<Schedule>)
+  }
+
+  class ScheduleDayAdapter {
+    - schedulesByDay: Map<String, List<Schedule>>
+    + onCreateViewHolder(): DayViewHolder
+    + onBindViewHolder()
+    + updateSchedules(newSchedulesByDay: Map<String, List<Schedule>>)
+  }
+
+  class ScheduleItemAdapter {
+    - schedules: List<Schedule>
+    + onCreateViewHolder(): ScheduleItemViewHolder
+    + onBindViewHolder()
+  }
+
+  class NotificationAdapter {
+    - notifications: List<ScheduleNotification>
+    - onItemClick: (ScheduleNotification) -> Unit
+    + onCreateViewHolder(): NotificationViewHolder
+    + onBindViewHolder()
+    + updateNotifications(newNotifications: List<ScheduleNotification>)
+  }
+}
+
+@enduml

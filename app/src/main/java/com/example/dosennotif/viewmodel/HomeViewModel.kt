@@ -24,7 +24,7 @@ import java.util.Date
 import java.util.Locale
 
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
-    private val repository = ScheduleRepository()
+    private val repository = ScheduleRepository(application)
     private val firestore = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
 
@@ -44,6 +44,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     val todaySchedules: LiveData<List<Schedule>> = _todaySchedules
 
     private val currentDayOfWeek = Calendar.getInstance().get(Calendar.DAY_OF_WEEK)
+
+    // ✅ ADD: Tracking untuk prevent duplicate scheduling
+    private var lastNotificationSchedule = 0L
+    private var lastScheduledNidn: String? = null
 
     init {
         loadUserData()
@@ -77,7 +81,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
                     filterTodaySchedules(result.data)
 
-                    scheduleNotifications(result.data)
+                    // ✅ ONLY schedule notifications on initial load, not on every location update
+                    scheduleNotificationsOnLoad(result.data, nidn)
                 }
                 is Resource.Error -> {
                     _scheduleState.value = result
@@ -109,12 +114,21 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }.sortedBy { schedule ->
             schedule.getStartTime()
         }
-        Log.d("filterToday", "${filteredSchedules}");
+        Log.d("filterToday", "${filteredSchedules}")
         _todaySchedules.postValue(filteredSchedules)
     }
 
-    private fun scheduleNotifications(schedules: List<Schedule>) {
+    // ✅ NEW: Schedule notifications only on initial load
+    private fun scheduleNotificationsOnLoad(schedules: List<Schedule>, nidn: String) {
         viewModelScope.launch {
+            val now = System.currentTimeMillis()
+
+            // ✅ CHECK: Skip jika baru saja scheduled untuk user yang sama
+            if (nidn == lastScheduledNidn && (now - lastNotificationSchedule) < SCHEDULE_COOLDOWN) {
+                Log.d("HomeViewModel", "⏳ Cooldown active for user $nidn, skipping notification scheduling")
+                return@launch
+            }
+
             _currentLocation.value?.let { location ->
                 val distance = LocationUtils.calculateDistanceFromCampus(
                     location.latitude,
@@ -122,7 +136,6 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 )
 
                 _distanceFromCampus.postValue(distance)
-
                 val delayMinutes = LocationUtils.getNotificationDelay(distance)
 
                 schedules.forEach { schedule ->
@@ -132,10 +145,19 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                         delayMinutes
                     )
                 }
+
+                // ✅ UPDATE tracking
+                lastNotificationSchedule = now
+                lastScheduledNidn = nidn
+
+                Log.d("HomeViewModel", "✅ Notifications scheduled for user $nidn with ${delayMinutes}min delay")
+            } ?: run {
+                Log.d("HomeViewModel", "⚠️ No location available, notifications will be scheduled when location is available")
             }
         }
     }
 
+    // ✅ MODIFIED: Only update distance, don't reschedule notifications
     fun updateCurrentLocation(location: Location) {
         _currentLocation.value = location
 
@@ -146,15 +168,28 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
         _distanceFromCampus.postValue(distance)
 
+        // ✅ REMOVED: Don't reschedule notifications on every location update
+        // scheduleNotifications(state.data) <- This was causing spam!
+
+        // ✅ ONLY schedule if we haven't scheduled yet and have schedule data
         _scheduleState.value.let { state ->
-            if (state is Resource.Success) {
-                scheduleNotifications(state.data)
+            if (state is Resource.Success && lastNotificationSchedule == 0L) {
+                _userData.value?.nidn?.let { nidn ->
+                    scheduleNotificationsOnLoad(state.data, nidn)
+                }
             }
         }
+
+        Log.d("HomeViewModel", "📍 Location updated: ${String.format("%.2f km", distance)} from campus")
     }
 
     fun getFormattedDistance(): String {
         val distance = _distanceFromCampus.value ?: 0f
         return String.format("%.2f km", distance)
+    }
+
+    companion object {
+        // ✅ ADD: Cooldown untuk prevent rapid scheduling
+        private const val SCHEDULE_COOLDOWN = 300_000L // 5 minutes
     }
 }

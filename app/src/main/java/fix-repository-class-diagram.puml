@@ -1,0 +1,13 @@
+@startuml
+package "Repository" #D5E8F9 {
+  class ScheduleRepository {
+    - apiService: ApiService
+    - firestore: FirebaseFirestore
+    - facultyDepartmentIds: List<String>
+    + getLecturerSchedule(lecturerNidn: String, period: String): Resource<List<Schedule>>
+    + saveNotification(userId: String, notification: ScheduleNotification): Resource<String>
+    + getUserNotifications(userId: String): Resource<List<ScheduleNotification>>
+    + markNotificationAsRead(userId: String, notificationId: String): Resource<Unit>
+  }
+}
+@enduml

@@ -1,0 +1,37 @@
+@startuml
+package "UI.Activities" #FFF9D5 {
+  class MainActivity {
+    - binding: ActivityMainBinding
+    - auth: FirebaseAuth
+    + onCreate(savedInstanceState: Bundle)
+    - requestRequiredPermissions()
+    - startRealtimeScheduleService()
+  }
+
+  class LoginActivity {
+    - binding: ActivityLoginBinding
+    - auth: FirebaseAuth
+    + onCreate(savedInstanceState: Bundle)
+    - loginUser()
+  }
+
+  class RegisterActivity {
+    - binding: ActivityRegisterBinding
+    - auth: FirebaseAuth
+    - firestore: FirebaseFirestore
+    + onCreate(savedInstanceState: Bundle)
+    - registerUser()
+    - checkNidnAvailability()
+    - createUserAccount()
+  }
+
+  class SplashActivity {
+    - binding: ActivitySplashBinding
+    - auth: FirebaseAuth
+    + onCreate(savedInstanceState: Bundle)
+    - setupAnimation()
+    - navigateToNextScreen()
+  }
+}
+
+@enduml

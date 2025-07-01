@@ -28,6 +28,11 @@ class RealtimeScheduleService : Service() {
     private val repository = ScheduleRepository()
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
+    // ✅ ADD: Tracking untuk prevent duplicate scheduling
+    private val scheduledNotifications = mutableSetOf<String>()
+    private var lastScheduleTime = 0L
+    private var lastUserNidn: String? = null
+
     override fun onCreate() {
         super.onCreate()
         NotificationUtils.createNotificationChannel(applicationContext)
@@ -47,6 +52,7 @@ class RealtimeScheduleService : Service() {
         return START_STICKY
     }
 
+    // ✅ FIXED: Prevent duplicate scheduling
     private suspend fun runRealtimeCheckLoop() {
         Log.d("AuthCheck", "User: ${FirebaseAuth.getInstance().currentUser}")
 
@@ -54,14 +60,24 @@ class RealtimeScheduleService : Service() {
             try {
                 val currentUser = FirebaseAuth.getInstance().currentUser
                 Log.d("currentUser", "${currentUser}")
+
                 if (currentUser != null) {
                     val location: Location? = LocationUtils.getLastLocation(applicationContext)
                     val userData: User? = getUserData(currentUser.uid)
                     val nidn = userData?.nidn
 
                     if (nidn != null && location != null) {
+                        // ✅ CHECK: Skip jika baru saja di-schedule untuk user yang sama
+                        val now = System.currentTimeMillis()
+                        if (nidn == lastUserNidn && (now - lastScheduleTime) < SCHEDULE_COOLDOWN_MS) {
+                            Log.d("RealtimeScheduleService", "⏳ Cooldown active for user $nidn, skipping...")
+                            delay(CHECK_INTERVAL_MS)
+                            continue
+                        }
+
                         val scheduleResult = repository.getLecturerSchedule(nidn)
-                        Log.d("schedule result", "runRealtimeCheckLoop:${scheduleResult} ")
+                        Log.d("schedule result", "runRealtimeCheckLoop:${scheduleResult}")
+
                         if (scheduleResult is Resource.Success) {
                             val distance = LocationUtils.calculateDistanceFromCampus(
                                 location.latitude,
@@ -69,21 +85,44 @@ class RealtimeScheduleService : Service() {
                             )
                             val delayMinutes = LocationUtils.getNotificationDelay(distance)
 
-                            scheduleResult.data.forEach { schedule ->
-                                Log.d("data schedule","schedule ${schedule}");
+                            var newScheduleCount = 0
+                            var skipCount = 0
 
-                                NotificationUtils.scheduleNotification(
-                                    applicationContext,
-                                    schedule,
-                                    delayMinutes
-                                )
+                            scheduleResult.data.forEach { schedule ->
+                                Log.d("data schedule", "schedule ${schedule}")
+
+                                // ✅ CREATE UNIQUE KEY untuk setiap schedule
+                                val scheduleKey = "${schedule.id_dosen}_${schedule.kode_mata_kuliah}_${schedule.kelas}_${schedule.ruang}_${schedule.hari}_${schedule.jam_mulai}"
+
+                                // ✅ ONLY SCHEDULE IF NOT ALREADY SCHEDULED
+                                if (!scheduledNotifications.contains(scheduleKey)) {
+                                    NotificationUtils.scheduleNotification(
+                                        applicationContext,
+                                        schedule,
+                                        delayMinutes
+                                    )
+                                    scheduledNotifications.add(scheduleKey)
+                                    newScheduleCount++
+                                    Log.d("RealtimeScheduleService", "✅ Scheduled: ${schedule.nama_mata_kuliah}")
+                                } else {
+                                    skipCount++
+                                    Log.d("RealtimeScheduleService", "⏭️ Skipped (already scheduled): ${schedule.nama_mata_kuliah}")
+                                }
                             }
+
+                            // ✅ UPDATE tracking variables
+                            lastScheduleTime = now
+                            lastUserNidn = nidn
+
+                            Log.d("RealtimeScheduleService", "📊 Summary: ${newScheduleCount} new, ${skipCount} skipped for user $nidn")
                         }
                     }
                 }
             } catch (e: Exception) {
                 Log.e("RealtimeScheduleService", "Error in realtime loop", e)
             }
+
+            // ✅ INCREASED INTERVAL untuk reduce frequency
             delay(CHECK_INTERVAL_MS)
         }
     }
@@ -116,6 +155,8 @@ class RealtimeScheduleService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         serviceScope.cancel()
+        // ✅ CLEAR tracking saat service destroyed
+        scheduledNotifications.clear()
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -144,6 +185,9 @@ class RealtimeScheduleService : Service() {
     companion object {
         private const val FOREGROUND_CHANNEL_ID = "realtime_schedule_service_channel"
         private const val NOTIF_ID = 1
-        private const val CHECK_INTERVAL_MS = 10_000L
+        // ✅ INCREASED from 10 seconds to 60 seconds
+        private const val CHECK_INTERVAL_MS = 60_000L
+        // ✅ ADD: Cooldown untuk prevent rapid re-scheduling
+        private const val SCHEDULE_COOLDOWN_MS = 300_000L // 5 minutes
     }
 }

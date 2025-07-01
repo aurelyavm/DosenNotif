@@ -1,0 +1,37 @@
+@startuml
+package "Utils" #E9E9E9 {
+  object LocationUtils {
+    - UPNVJ_LATITUDE: Double
+    - UPNVJ_LONGITUDE: Double
+    + calculateDistance(): Float
+    + calculateDistanceFromCampus(latitude: Double, longitude: Double): Float
+    + getNotificationDelay(distanceInKm: Float): Int
+    + getLocationUpdates(context: Context): Flow<Location>
+    + getLastLocation(context: Context): Location?
+  }
+
+  object NotificationUtils {
+    - CHANNEL_ID: String
+    - CHANNEL_NAME: String
+    + createNotificationChannel(context: Context)
+    + scheduleNotification(context: Context, schedule: Schedule, delayMinutes: Int)
+    + showNotification(context: Context, ...)
+    - extractCourseNameFromTitle(title: String): String
+  }
+
+  class Resource {
+    + Success<T>
+    + Error
+    + Loading
+  }
+
+  class AlarmReceiver {
+    + onReceive(context: Context, intent: Intent)
+  }
+
+  class BootReceiver {
+    + onReceive(context: Context, intent: Intent)
+  }
+}
+
+@enduml

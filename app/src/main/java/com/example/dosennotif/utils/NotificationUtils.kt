@@ -18,11 +18,16 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
 object NotificationUtils {
     private const val CHANNEL_ID = "schedule_notification_channel"
     private const val CHANNEL_NAME = "Schedule Notifications"
     private const val CHANNEL_DESCRIPTION = "Notifications for upcoming teaching schedules"
+
+    // ✅ ADD: Global tracking untuk prevent duplicate alarms
+    private val scheduledAlarms = ConcurrentHashMap<String, Long>()
+    private val ALARM_VALIDITY_DURATION = 24 * 60 * 60 * 1000L // 24 hours
 
     fun createNotificationChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -42,7 +47,7 @@ object NotificationUtils {
         val currentUser = FirebaseAuth.getInstance().currentUser ?: return
 
         val (hour, minute) = schedule.jam_mulai.split(":").map { it.toInt() }
-        val dayOfWeek = schedule.getDayOfWeekNumber() // misalnya: 2 = Senin
+        val dayOfWeek = schedule.getDayOfWeekNumber()
 
         val startTime = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, hour)
@@ -64,11 +69,22 @@ object NotificationUtils {
             return
         }
 
+        // ✅ CREATE UNIQUE KEY untuk tracking duplikasi
+        val ruang = schedule.ruang ?: "unknown"
+        val scheduleId = "${schedule.id_dosen}_${schedule.kode_mata_kuliah}_${schedule.kelas}_$ruang"
+        val alarmKey = "${scheduleId}_${notifyTime.timeInMillis}"
+
+        // ✅ CHECK: Skip jika alarm sudah dijadwalkan recently
+        scheduledAlarms[alarmKey]?.let { scheduledTime ->
+            if ((now - scheduledTime) < ALARM_VALIDITY_DURATION) {
+                Log.d("NotificationUtils", "⏭️ Alarm already scheduled recently: ${schedule.nama_mata_kuliah}")
+                return
+            }
+        }
+
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val db = FirebaseFirestore.getInstance()
-                val ruang = schedule.ruang ?: "unknown"
-                val scheduleId = "${schedule.id_dosen}_${schedule.kode_mata_kuliah}_${schedule.kelas}_$ruang"
                 val documentId = "${scheduleId}_${notifyTime.timeInMillis}"
 
                 val docSnapshot = db.collection("users")
@@ -79,7 +95,7 @@ object NotificationUtils {
                     .await()
 
                 if (docSnapshot.exists()) {
-                    Log.d("NotificationUtils", "❌ Duplikat notifikasi: $documentId")
+                    Log.d("NotificationUtils", "❌ Duplikat notifikasi di Firestore: $documentId")
                     return@launch
                 }
 
@@ -119,6 +135,9 @@ object NotificationUtils {
                     )
                 }
 
+                // ✅ MARK sebagai scheduled
+                scheduledAlarms[alarmKey] = now
+
                 val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
                 Log.d("NotificationUtils", "✅ Notifikasi ${schedule.nama_mata_kuliah} dijadwalkan: ${formatter.format(notifyTime.time)}")
 
@@ -127,6 +146,23 @@ object NotificationUtils {
             }
         }
     }
+
+    // ✅ ADD: Function untuk clear expired alarms
+    fun clearExpiredAlarms() {
+        val now = System.currentTimeMillis()
+        val expiredKeys = scheduledAlarms.entries.filter {
+            (now - it.value) > ALARM_VALIDITY_DURATION
+        }.map { it.key }
+
+        expiredKeys.forEach { scheduledAlarms.remove(it) }
+
+        if (expiredKeys.isNotEmpty()) {
+            Log.d("NotificationUtils", "🧹 Cleared ${expiredKeys.size} expired alarm entries")
+        }
+    }
+
+    // ✅ ADD: Function untuk debug - lihat scheduled alarms
+    fun getScheduledAlarmsCount(): Int = scheduledAlarms.size
 
     fun showNotification(
         context: Context,

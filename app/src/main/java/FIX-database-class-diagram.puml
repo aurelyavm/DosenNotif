@@ -1,0 +1,95 @@
+@startuml DosenNotif_Database_ActuallyUsed
+
+!define ENTITY_COLOR #E3F2FD
+!define DTO_COLOR #FFF8E1
+
+title **Dosender - Database Class Diagram**
+
+skinparam classAttributeIconSize 0
+skinparam defaultFontSize 12
+skinparam classFontSize 14
+skinparam titleFontSize 16
+skinparam packageFontSize 14
+
+class User ENTITY_COLOR {
+  - id : String
+  - name : String
+  - email : String
+  - nidn : String
+  - createdAt : Long
+  ____
+  + User()
+  + getId() : String
+  + getName() : String
+  + getEmail() : String
+  + getNidn() : String
+  + getCreatedAt() : Long
+}
+
+class Schedule ENTITY_COLOR {
+  - id_dosen : String
+  - nama_dosen : String
+  - nidn_dosen : String
+  - id_periode : String
+  - id_program_studi : String
+  - nama_program_studi : String
+  - kode_mata_kuliah : String
+  - nama_mata_kuliah : String
+  - sks : String
+  - kelas : String
+  - hari : String
+  - jam_mulai : String
+  - jam_selesai : String
+  - ruang : String
+  ____
+  + Schedule()
+  + getFormattedDay() : String
+  + getFormattedStartTime() : String
+  + getFormattedEndTime() : String
+  + getTimeRange() : String
+  + getDayOfWeekNumber() : Integer
+}
+
+class ScheduleNotification ENTITY_COLOR {
+  - id : String
+  - scheduleId : String
+  - title : String
+  - message : String
+  - scheduledTime : Long
+  - actualScheduleTime : Long
+  - room : String
+  - courseName : String
+  - className : String
+  - isRead : Boolean
+  - createdAt : Long
+  ____
+  + ScheduleNotification()
+  + getId() : String
+  + getScheduleId() : String
+  + getTitle() : String
+  + getMessage() : String
+  + getScheduledTime() : Long
+  + getActualScheduleTime() : Long
+  + getRoom() : String
+  + getCourseName() : String
+  + getClassName() : String
+  + isRead() : Boolean
+  + getCreatedAt() : Long
+}
+
+class ScheduleResponse DTO_COLOR {
+  - status : String
+  - message : String
+  - data : List<Schedule>
+  ____
+  + ScheduleResponse()
+  + getStatus() : String
+  + getMessage() : String
+  + getData() : List<Schedule>
+}
+
+User ||--o{ ScheduleNotification : owns
+Schedule ||--o{ ScheduleNotification : generates
+ScheduleResponse ||--o{ Schedule : contains
+
+@enduml

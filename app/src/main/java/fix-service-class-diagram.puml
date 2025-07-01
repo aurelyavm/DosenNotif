@@ -1,0 +1,14 @@
+@startuml
+package "Service" #F0E6FF {
+  class RealtimeScheduleService {
+    - repository: ScheduleRepository
+    - serviceScope: CoroutineScope
+    + onCreate()
+    + onStartCommand(): Int
+    - runRealtimeCheckLoop()
+    - getUserData(userId: String): User?
+    - createForegroundNotificationChannel()
+    - buildForegroundNotification(content: String): Notification
+  }
+}
+@enduml

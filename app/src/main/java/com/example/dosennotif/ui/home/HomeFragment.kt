@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -46,7 +47,6 @@ class HomeFragment : Fragment() {
         viewModel = ViewModelProvider(this)[HomeViewModel::class.java]
 
         setupRecyclerView()
-
         setGreeting()
 
         binding.btnRefresh.setOnClickListener {
@@ -54,7 +54,6 @@ class HomeFragment : Fragment() {
         }
 
         observeViewModel()
-
         requestLocationUpdates()
     }
 
@@ -62,6 +61,7 @@ class HomeFragment : Fragment() {
         binding.progressBar.visibility = View.VISIBLE
         binding.tvNoSchedule.visibility = View.GONE
         binding.btnRefresh.visibility = View.GONE
+        binding.tvApiStatus.visibility = View.GONE
 
         viewModel.loadUserData()
     }
@@ -110,9 +110,13 @@ class HomeFragment : Fragment() {
                     is Resource.Loading -> {
                         binding.progressBar.visibility = View.VISIBLE
                         binding.tvNoSchedule.visibility = View.GONE
+                        binding.tvApiStatus.visibility = View.GONE
                     }
                     is Resource.Success -> {
                         binding.progressBar.visibility = View.GONE
+
+                        // TAMBAHAN: Indikator status sumber data
+                        showDataSourceStatus(state.data)
 
                         viewModel.todaySchedules.observe(viewLifecycleOwner) { schedules ->
                             updateScheduleList(schedules)
@@ -123,11 +127,103 @@ class HomeFragment : Fragment() {
                         binding.tvNoSchedule.text = getString(R.string.api_error)
                         binding.tvNoSchedule.visibility = View.VISIBLE
                         binding.rvTodaySchedule.visibility = View.GONE
+                        binding.tvApiStatus.visibility = View.VISIBLE
+                        binding.tvApiStatus.text = "⚠️ Menggunakan data cadangan"
+                        binding.tvApiStatus.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.holo_orange_dark))
                     }
                 }
             }
         }
     }
+
+    // ======================================
+    // FUNGSI BARU: STATUS INDICATOR
+    // ======================================
+
+    /**
+     * Menampilkan status sumber data yang digunakan
+     */
+    private fun showDataSourceStatus(schedules: List<Schedule>) {
+        if (schedules.isNotEmpty()) {
+            binding.tvApiStatus.visibility = View.VISIBLE
+
+            val firstSchedule = schedules.first()
+            val dataSource = detectDataSource(firstSchedule, schedules)
+
+            when (dataSource) {
+                DataSource.API_REAL -> {
+                    binding.tvApiStatus.text = "✅ Data Terkini dari Server"
+                    binding.tvApiStatus.setTextColor(
+                        ContextCompat.getColor(requireContext(), android.R.color.holo_green_dark)
+                    )
+                }
+                DataSource.ASSETS_BACKUP -> {
+                    binding.tvApiStatus.text = "📦 Data dari Assets Backup"
+                    binding.tvApiStatus.setTextColor(
+                        ContextCompat.getColor(requireContext(), android.R.color.holo_orange_dark)
+                    )
+                }
+                DataSource.INDIVIDUAL_BACKUP -> {
+                    binding.tvApiStatus.text = "📂 Data dari Backup Individual"
+                    binding.tvApiStatus.setTextColor(
+                        ContextCompat.getColor(requireContext(), android.R.color.holo_blue_dark)
+                    )
+                }
+                DataSource.MOCK_DATA -> {
+                    binding.tvApiStatus.text = "📱 Mode Demo - Data Simulasi"
+                    binding.tvApiStatus.setTextColor(
+                        ContextCompat.getColor(requireContext(), android.R.color.holo_blue_bright)
+                    )
+                }
+            }
+        } else {
+            binding.tvApiStatus.visibility = View.GONE
+        }
+    }
+
+    /**
+     * Detect data source berdasarkan karakteristik data
+     */
+    private fun detectDataSource(firstSchedule: Schedule, allSchedules: List<Schedule>): DataSource {
+        // Mock data detection
+        if (firstSchedule.id_dosen.startsWith("mock_") ||
+            firstSchedule.kode_mata_kuliah.startsWith("MOCK") ||
+            firstSchedule.nama_mata_kuliah.contains("Demo")) {
+            return DataSource.MOCK_DATA
+        }
+
+        // Assets backup detection (real course codes dari JSON)
+        if (firstSchedule.kode_mata_kuliah.startsWith("INF") ||
+            firstSchedule.kode_mata_kuliah.startsWith("SIF") ||
+            firstSchedule.kode_mata_kuliah.startsWith("TIF") ||
+            firstSchedule.ruang.contains("VCR") ||
+            firstSchedule.ruang.contains("FIK")) {
+            return DataSource.ASSETS_BACKUP
+        }
+
+        // Individual backup (usually fewer schedules, different naming)
+        if (allSchedules.size < 10 &&
+            !firstSchedule.kode_mata_kuliah.startsWith("INF")) {
+            return DataSource.INDIVIDUAL_BACKUP
+        }
+
+        // Default: assume real API
+        return DataSource.API_REAL
+    }
+
+    /**
+     * Enum untuk jenis data source
+     */
+    private enum class DataSource {
+        API_REAL,
+        ASSETS_BACKUP,
+        INDIVIDUAL_BACKUP,
+        MOCK_DATA
+    }
+
+    // ======================================
+    // FUNGSI EXISTING
+    // ======================================
 
     private fun updateScheduleList(schedules: List<Schedule>?) {
         if (schedules.isNullOrEmpty()) {
