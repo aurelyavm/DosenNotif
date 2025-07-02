@@ -206,5 +206,21 @@
     "jam_mulai": "13:00:00",
     "jam_selesai": "14:40:00",
     "ruang": "FIKLAB-203"
+  },
+  {
+    "id_dosen": "dosen_nf",
+    "nama_dosen": "Nurhafifah Matondang, S.Kom., M.Kom",
+    "nidn_dosen": "0010108804",
+    "id_periode": "20242",
+    "id_program_studi": "6",
+    "nama_program_studi": "D3 Sistem Informasi",
+    "kode_mata_kuliah": "INTELEG",
+    "nama_mata_kuliah": "Intelegensia Bisnis",
+    "sks": "2",
+    "kelas": "B",
+    "hari": "Kamis",
+    "jam_mulai": "13:00:00",
+    "jam_selesai": "14:40:00",
+    "ruang": "FIKLAB-203"
   }
 ]
