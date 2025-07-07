@@ -1,6 +1,7 @@
 package com.example.dosennotif.api
 
 import android.util.Base64
+import com.example.dosennotif.BuildConfig
 import okhttp3.*
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -12,8 +13,9 @@ object ApiClient {
     private const val BASE_URL = "https://api.upnvj.ac.id/"
 
     private val CUSTOM_HEADERS = mapOf(
-        "API_KEY_NAME" to "X-UPNVJ-API-KEY",
-        "API_KEY_SECRET" to "Cspwwxq5SyTOMkq8XYcwZ1PMpYrYCwrv",
+        //"API_KEY_NAME" to "X-UPNVJ-API-KEY",
+        //"API_KEY_SECRET" to "Cspwwxq5SyTOMkq8XYcwZ1PMpYrYCwrv",
+        "X-UPNVJ-API-KEY" to BuildConfig.X_UPNVJ_API_KEY,
         "Accept" to "application/json",
         "Content-Type" to "multipart/form-data"
     )

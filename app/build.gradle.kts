@@ -18,8 +18,9 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "BASE_URL", "\"${property("BASE_URL")}\"")
-        buildConfigField("String", "API_KEY_NAME", "\"${property("API_KEY_NAME")}\"")
-        buildConfigField("String", "API_KEY_SECRET", "\"${property("API_KEY_SECRET")}\"")
+        //buildConfigField("String", "API_KEY_NAME", "\"${property("API_KEY_NAME")}\"")
+        //buildConfigField("String", "API_KEY_SECRET", "\"${property("API_KEY_SECRET")}\"")
+        buildConfigField("String", "X_UPNVJ_API_KEY", "\"${property("X_UPNVJ_API_KEY")}\"")
         buildConfigField("String", "BASIC_AUTH_USERNAME", "\"${property("BASIC_AUTH_USERNAME")}\"")
         buildConfigField("String", "BASIC_AUTH_PASSWORD", "\"${property("BASIC_AUTH_PASSWORD")}\"")
     }
